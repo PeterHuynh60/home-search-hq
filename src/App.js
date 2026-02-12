@@ -13,23 +13,24 @@ var S_OPTS = ["House","Townhouse","Condo"];
 var P_OPTS = ["None","Reserved (1)","Reserved (2)","Garage (1)","Garage (2)"];
 var BED_OPTS = ["1","2","3","4+"];
 var BATH_OPTS = ["1","1.5","2","2.5","3+"];
-var GMAPS_CLIENT_KEY = "AIzaSyCxX5eVLsbZfPzRlOqKUz5HlS_M8OStBJ8"; // Paste your Google Maps JS API key here
+var GMAPS_CLIENT_KEY = ""; // Paste your Google Maps JS API key here
 var AUTH_EMAIL = "home@search.hq";
 
-/* ─── Color Palette (matches huynh.place) ─── */
+/* ─── Color Palette (matches huynh.place / bet.huynh.place) ─── */
 var C = {
   primary: "#55c278",
   primaryDark: "#48a869",
   primaryLight: "#77CE93",
-  bg: "#f4f9f6",
+  primaryBg: "#e8f5ee",
+  bg: "#f0f7f3",
   card: "#ffffff",
-  cardBorder: "#dee2e6",
+  cardBorder: "#c8e6d3",
   text: "#212529",
   textMuted: "#6c757d",
   textLight: "#888",
   heading: "#55c278",
-  inputBg: "#f8f9fa",
-  inputBorder: "#ced4da"
+  inputBg: "#f8faf9",
+  inputBorder: "#b8d8c5"
 };
 
 function calcPmt(ratePct, years, principal) {
@@ -283,7 +284,7 @@ function MapPanel(props) {
     if (!ready || !open || !mapInstance.current) return;
     var gm = window.google.maps;
     var map = mapInstance.current;
-    for (var i = 0; i < markersRef.current.length; i++) markersRef.current[i].setMap(null);
+    for (var i = 0; i < markersRef.current.length; i++) markersRef.current[i].remove();
     markersRef.current = [];
     for (var j = 0; j < routesRef.current.length; j++) routesRef.current[j].setMap(null);
     routesRef.current = [];
@@ -299,39 +300,75 @@ function MapPanel(props) {
       function placeMarker(pos) {
         var sc = ST_COLORS[h.status] || "#6c757d";
         var priceLabel = "$" + Math.round(h.price / 1000) + "k";
-        var marker = new gm.Marker({
-          position: pos,
-          map: map,
-          label: { text: priceLabel, color: "#fff", fontSize: "10px", fontWeight: "700" },
-          icon: {
-            path: "M-14,-8 L14,-8 L14,8 L-14,8 Z",
-            fillColor: sc,
-            fillOpacity: 0.9,
-            strokeColor: "#fff",
-            strokeWeight: 1,
-            scale: 1,
-            labelOrigin: new gm.Point(0, 0)
-          },
-          title: h.address,
-          zIndex: h.status === "Good" ? 100 : h.status === "Out" ? 1 : 50
-        });
-        markersRef.current.push(marker);
+
+        // Create custom bubble marker using OverlayView
+        function BubbleMarker(position, map, label, color, home) {
+          this.position = position;
+          this.label = label;
+          this.color = color;
+          this.home = home;
+          this.div = null;
+          this.setMap(map);
+        }
+        BubbleMarker.prototype = new gm.OverlayView();
+        BubbleMarker.prototype.onAdd = function() {
+          var div = document.createElement("div");
+          div.style.position = "absolute";
+          div.style.background = this.color;
+          div.style.color = "#fff";
+          div.style.padding = "4px 10px";
+          div.style.borderRadius = "20px";
+          div.style.fontSize = "11px";
+          div.style.fontWeight = "700";
+          div.style.fontFamily = "Muli, sans-serif";
+          div.style.whiteSpace = "nowrap";
+          div.style.cursor = "pointer";
+          div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+          div.style.border = "2px solid #fff";
+          div.style.textAlign = "center";
+          div.style.lineHeight = "1.2";
+          div.style.zIndex = this.home.status === "Good" ? "100" : this.home.status === "Out" ? "1" : "50";
+          div.style.transition = "transform 0.15s ease";
+          div.textContent = this.label;
+          var self = this;
+          div.addEventListener("mouseover", function() { div.style.transform = "scale(1.15)"; div.style.zIndex = "200"; });
+          div.addEventListener("mouseout", function() { div.style.transform = "scale(1)"; div.style.zIndex = self.home.status === "Good" ? "100" : self.home.status === "Out" ? "1" : "50"; });
+          div.addEventListener("click", function() {
+            var hh = self.home;
+            var content = '<div style="font-family:Muli,sans-serif;color:#212529;max-width:220px">' +
+              '<strong style="font-size:13px">' + hh.address + '</strong><br>' +
+              '<span style="font-size:12px;color:#6c757d">' + hh.city + (hh.neighborhood ? " · " + hh.neighborhood : "") + '</span><br>' +
+              '<span style="font-size:13px;font-weight:700;color:#55c278">$' + hh.price.toLocaleString() + '</span>' +
+              '<span style="font-size:11px;color:#888"> · ' + hh.sqft + ' sqft</span><br>' +
+              '<span style="font-size:11px;color:#888">' + hh.bed + ' bed · ' + hh.bath + ' bath · ' + hh.style + '</span>' +
+              (hh.commute != null ? '<br><span style="font-size:11px;color:#0d6efd">🚗 ' + hh.commute + ' min</span>' : '') +
+              '<br><span style="display:inline-block;margin-top:4px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:' + self.color + '22;color:' + self.color + '">' + hh.status + '</span>' +
+              '</div>';
+            infoRef.current.setContent(content);
+            infoRef.current.setPosition(self.position);
+            infoRef.current.open(map);
+          });
+          this.div = div;
+          var panes = this.getPanes();
+          panes.overlayMouseTarget.appendChild(div);
+        };
+        BubbleMarker.prototype.draw = function() {
+          var proj = this.getProjection();
+          var point = proj.fromLatLngToDivPixel(this.position);
+          if (this.div) {
+            this.div.style.left = (point.x - this.div.offsetWidth / 2) + "px";
+            this.div.style.top = (point.y - this.div.offsetHeight / 2) + "px";
+          }
+        };
+        BubbleMarker.prototype.onRemove = function() {
+          if (this.div) { this.div.parentNode.removeChild(this.div); this.div = null; }
+        };
+        BubbleMarker.prototype.remove = function() { this.setMap(null); };
+
+        var bubble = new BubbleMarker(pos, map, priceLabel, sc, h);
+        markersRef.current.push(bubble);
         bounds.extend(pos);
         map.fitBounds(bounds, 40);
-
-        marker.addListener("click", function() {
-          var content = '<div style="font-family:Muli,sans-serif;color:#212529;max-width:220px">' +
-            '<strong style="font-size:13px">' + h.address + '</strong><br>' +
-            '<span style="font-size:12px;color:#6c757d">' + h.city + (h.neighborhood ? " · " + h.neighborhood : "") + '</span><br>' +
-            '<span style="font-size:13px;font-weight:700;color:#55c278">$' + h.price.toLocaleString() + '</span>' +
-            '<span style="font-size:11px;color:#888"> · ' + h.sqft + ' sqft</span><br>' +
-            '<span style="font-size:11px;color:#888">' + h.bed + ' bed · ' + h.bath + ' bath · ' + h.style + '</span>' +
-            (h.commute != null ? '<br><span style="font-size:11px;color:#0d6efd">🚗 ' + h.commute + ' min</span>' : '') +
-            '<br><span style="display:inline-block;margin-top:4px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:' + sc + '22;color:' + sc + '">' + h.status + '</span>' +
-            '</div>';
-          infoRef.current.setContent(content);
-          infoRef.current.open(map, marker);
-        });
 
         directionsService.route({
           origin: pos,
@@ -514,8 +551,11 @@ function HomeCard(props) {
   return (
     <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,overflow:"hidden",boxShadow:"0 1px 4px #0001"}}>
       <div style={{height:4,background:sc}} />
+      {h.photoUrl && ex && <div style={{width:"100%",maxHeight:220,overflow:"hidden",background:C.inputBg}}>
+        <img src={h.photoUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
+      </div>}
       <div style={{display:"flex"}}>
-        {h.photoUrl && <div style={{width:120,minHeight:100,flexShrink:0,overflow:"hidden",background:C.inputBg}}>
+        {h.photoUrl && !ex && <div style={{width:120,minHeight:100,flexShrink:0,overflow:"hidden",background:C.inputBg}}>
           <img src={h.photoUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
         </div>}
         <div style={{padding:"14px 18px",flex:1,minWidth:0}}>
@@ -607,7 +647,7 @@ function LoginScreen(props) {
   }
 
   return (
-    <div style={{minHeight:"100vh",background:C.primaryLight,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--body)"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg, "+C.primary+" 0%, "+C.primaryDark+" 100%)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--body)"}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}input:focus{border-color:${C.primary}!important;outline:none}`}</style>
       <div style={{background:C.card,borderRadius:20,padding:40,width:"90%",maxWidth:380,border:"1px solid "+C.cardBorder,textAlign:"center",boxShadow:"0 8px 32px #0002"}}>
         <div style={{width:56,height:56,borderRadius:14,background:C.primary,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 16px",color:"#fff"}}>🏠</div>
@@ -678,16 +718,21 @@ function Dashboard() {
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"var(--body)",color:C.text}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.cardBorder};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}`}</style>
-      <div style={{maxWidth:960,margin:"0 auto",padding:"28px 20px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-          <div style={{width:36,height:36,borderRadius:10,background:C.primary,display:"flex",alignItems:"center",justifyContent:"center",fontSize:19,color:"#fff"}}>🏠</div>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}`}</style>
+
+      {/* Green Header Banner */}
+      <div style={{background:C.primary,padding:"24px 20px 20px",marginBottom:0}}>
+        <div style={{maxWidth:960,margin:"0 auto",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:40,height:40,borderRadius:10,background:"rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏠</div>
           <div style={{flex:1}}>
-            <h1 style={{margin:0,fontSize:30,fontWeight:700,letterSpacing:"-0.01em",color:C.primary,fontFamily:"var(--head)"}}>Home Search HQ</h1>
-            <p style={{margin:0,fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>Peter & Michelle · Denver Metro · {homes.length} properties</p>
+            <h1 style={{margin:0,fontSize:30,fontWeight:700,letterSpacing:"-0.01em",color:"#fff",fontFamily:"var(--head)"}}>Home Search HQ</h1>
+            <p style={{margin:0,fontSize:12,color:"rgba(255,255,255,0.8)",fontFamily:"var(--body)"}}>Peter & Michelle · Denver Metro · {homes.length} properties</p>
           </div>
-          <button onClick={doSignOut} style={{background:"none",border:"1px solid "+C.cardBorder,borderRadius:8,padding:"6px 14px",color:C.textMuted,cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>Sign Out</button>
+          <button onClick={doSignOut} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>Sign Out</button>
         </div>
+      </div>
+
+      <div style={{maxWidth:960,margin:"0 auto",padding:"20px 20px 28px"}}>
 
         <MortgageBar cfg={cfg} onChange={setCfg} />
 
@@ -696,10 +741,10 @@ function Dashboard() {
             <span style={{color:"#0d6efd"}}>📍</span> Commute to: <span style={{color:"#0d6efd"}}>{WORK_ADDRESS}</span>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8}}>
-            {[["Total",homes.length,C.primary],["Active",activeCount,"#28a745"],["Toured",touredCount,"#6f42c1"],["Avg Price","$"+Math.round(avgPrice/1000)+"k","#e83e8c"]].map(function(item){
-              return <div key={item[0]} style={{background:C.card,borderRadius:10,padding:"14px 16px",borderLeft:"3px solid "+item[2],border:"1px solid "+C.cardBorder,borderLeftWidth:3,borderLeftColor:item[2]}}>
-                <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.06em",marginBottom:4}}>{item[0].toUpperCase()}</div>
-                <div style={{fontSize:24,fontWeight:700,color:item[2],fontFamily:"var(--head)"}}>{item[1]}</div>
+            {[["Total",homes.length],["Active",activeCount],["Toured",touredCount],["Avg Price","$"+Math.round(avgPrice/1000)+"k"]].map(function(item){
+              return <div key={item[0]} style={{background:C.primary,borderRadius:10,padding:"14px 16px"}}>
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.7)",fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.06em",marginBottom:4}}>{item[0].toUpperCase()}</div>
+                <div style={{fontSize:24,fontWeight:700,color:"#fff",fontFamily:"var(--head)"}}>{item[1]}</div>
               </div>
             })}
           </div>
