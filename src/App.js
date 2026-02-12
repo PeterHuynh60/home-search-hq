@@ -13,7 +13,7 @@ var S_OPTS = ["House","Townhouse","Condo"];
 var P_OPTS = ["None","Reserved (1)","Reserved (2)","Garage (1)","Garage (2)"];
 var BED_OPTS = ["1","2","3","4+"];
 var BATH_OPTS = ["1","1.5","2","2.5","3+"];
-var GMAPS_CLIENT_KEY = ""; // Paste your Google Maps JS API key here
+var GMAPS_CLIENT_KEY = "AIzaSyCxX5eVLsbZfPzRlOqKUz5HlS_M8OStBJ8"; // Paste your Google Maps JS API key here
 var AUTH_EMAIL = "home@search.hq";
 
 /* ─── Color Palette (matches huynh.place / bet.huynh.place) ─── */
@@ -551,11 +551,8 @@ function HomeCard(props) {
   return (
     <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,overflow:"hidden",boxShadow:"0 1px 4px #0001"}}>
       <div style={{height:4,background:sc}} />
-      {h.photoUrl && ex && <div style={{width:"100%",maxHeight:220,overflow:"hidden",background:C.inputBg}}>
-        <img src={h.photoUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
-      </div>}
       <div style={{display:"flex"}}>
-        {h.photoUrl && !ex && <div style={{width:120,minHeight:100,flexShrink:0,overflow:"hidden",background:C.inputBg}}>
+        {h.photoUrl && <div style={{width:ex?200:120,flexShrink:0,overflow:"hidden",background:C.inputBg,transition:"width 0.3s ease"}}>
           <img src={h.photoUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
         </div>}
         <div style={{padding:"14px 18px",flex:1,minWidth:0}}>
