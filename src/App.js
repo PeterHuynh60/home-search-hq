@@ -295,6 +295,9 @@ function MapPanel(props) {
   var geocacheRef = React.useRef({});
   var workMarkerRef = React.useRef(null);
   var hasFitRef = React.useRef(false);
+  var homesRef = React.useRef(homes);
+  var prevHomesLen = React.useRef(0);
+  homesRef.current = homes;
 
   // Wire up global click handler for info window address links
   useEffect(function() {
@@ -409,7 +412,7 @@ function MapPanel(props) {
     var bounds = new gm.LatLngBounds();
     bounds.extend(WORK_COORDS);
 
-    homes.forEach(function(h) {
+    homesRef.current.forEach(function(h) {
       var fullAddr = h.address + ", " + (h.city || "Denver") + ", CO";
       var cached = geocacheRef.current[fullAddr];
 
@@ -517,7 +520,7 @@ function MapPanel(props) {
       }
     });
     hasFitRef.current = true;
-  }, [ready, open, homes]);
+  }, [ready, open]);
 
   if (!gmapsKey) return null;
 
@@ -945,14 +948,17 @@ function Dashboard(props) {
 
         <div style={{fontSize:12,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>Showing {filtered.length} of {homes.length}</div>
 
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
           {filtered.map(function(h) {
-            return <HomeCard key={h.id} home={h} onUpdate={upd} onDelete={del} expanded={exId===h.id} onToggle={function(id){setExId(function(p){return p===id?null:id})}} cfg={cfg} canEdit={canEdit} onShowOnMap={function(home){
+            var isExpanded = exId===h.id;
+            return <div key={h.id} style={isExpanded?{gridColumn:"1/-1"}:{}}>
+              <HomeCard home={h} onUpdate={upd} onDelete={del} expanded={isExpanded} onToggle={function(id){setExId(function(p){return p===id?null:id})}} cfg={cfg} canEdit={canEdit} onShowOnMap={function(home){
               if (mapPanelRef.current) mapPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
               setTimeout(function(){
                 if (mapFocusRef.current) mapFocusRef.current(home);
               }, 300);
-            }} />;
+            }} />
+            </div>;
           })}
         </div>
 
