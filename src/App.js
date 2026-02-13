@@ -170,12 +170,26 @@ function Panel(props) {
 function MortgageBar(props) {
   var cfg = props.cfg;
   var onChange = props.onChange;
+  var _local = useState(cfg); var localCfg = _local[0]; var setLocalCfg = _local[1];
+  var timerRef = React.useRef(null);
+
+  // Sync from parent when cfg changes externally
+  useEffect(function() { setLocalCfg(cfg); }, [cfg]);
+
+  function handleChange(field, val) {
+    var o = Object.assign({}, localCfg);
+    o[field] = val;
+    setLocalCfg(o);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(function() { onChange(o); }, 400);
+  }
+
   function MF(mfProps) {
     return (
       <div style={{display:"flex",flexDirection:"column",gap:3}}>
         <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600}}>{mfProps.label}</label>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
-          <input type="number" step={mfProps.step||"0.01"} value={cfg[mfProps.field]} onChange={function(e){var o=Object.assign({},cfg);o[mfProps.field]=parseFloat(e.target.value)||0;onChange(o)}}
+          <input type="number" step={mfProps.step||"0.01"} value={localCfg[mfProps.field]} onChange={function(e){handleChange(mfProps.field,parseFloat(e.target.value)||0)}}
             style={{width:80,background:C.inputBg,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none"}} />
           {mfProps.suffix && <span style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>{mfProps.suffix}</span>}
         </div>
@@ -280,6 +294,7 @@ function MapPanel(props) {
   var infoRef = React.useRef(null);
   var geocacheRef = React.useRef({});
   var workMarkerRef = React.useRef(null);
+  var hasFitRef = React.useRef(false);
 
   // Wire up global click handler for info window address links
   useEffect(function() {
@@ -345,6 +360,7 @@ function MapPanel(props) {
       mapInstance.current = null;
       markersRef.current = [];
       routesRef.current = [];
+      hasFitRef.current = false;
     }
   }, [open]);
 
@@ -470,7 +486,9 @@ function MapPanel(props) {
         var bubble = new BubbleMarker(pos, map, priceLabel, sc, h);
         markersRef.current.push(bubble);
         bounds.extend(pos);
-        map.fitBounds(bounds, 40);
+        if (!hasFitRef.current) {
+          map.fitBounds(bounds, 40);
+        }
 
         directionsService.route({
           origin: pos,
@@ -498,6 +516,7 @@ function MapPanel(props) {
         });
       }
     });
+    hasFitRef.current = true;
   }, [ready, open, homes]);
 
   if (!gmapsKey) return null;
@@ -630,7 +649,8 @@ function ManualModal(props) {
   );
 }
 
-/* ─── Home Card ─── */
+
+/* ─── Home Card (Compact Box) ─── */
 function HomeCard(props) {
   var h = props.home, u = props.onUpdate, del = props.onDelete, ex = props.expanded, tog = props.onToggle, cfg = props.cfg, canEdit = props.canEdit, onMap = props.onShowOnMap;
   var dp = h.downPayment != null ? h.downPayment : calcDown(h.price, cfg);
@@ -652,139 +672,106 @@ function HomeCard(props) {
     : h.address;
 
   return (
-    <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,overflow:"hidden",boxShadow:"0 1px 4px #0001"}}>
-      <div style={{height:4,background:sc}} />
+    <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+(ex?C.primary+"66":C.cardBorder),overflow:"hidden",boxShadow:ex?"0 2px 12px #55c27822":"0 1px 4px #0001",transition:"all 0.2s ease",cursor:"pointer"}} onClick={function(e){if(e.target.tagName!=="INPUT"&&e.target.tagName!=="SELECT"&&e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&!e.target.closest("button")&&!e.target.closest("a")&&!e.target.closest("label"))tog(h.id)}}>
+      <div style={{height:3,background:sc}} />
       <div style={{display:"flex"}}>
-        {h.photoUrl && <div style={{width:ex?"40%":"120px",minWidth:ex?300:120,flexShrink:0,background:C.inputBg,transition:"all 0.3s ease",alignSelf:"stretch",position:"relative",minHeight:ex?200:100,overflow:"hidden"}}>
+        {h.photoUrl && <div style={{width:ex?220:100,flexShrink:0,background:C.inputBg,transition:"width 0.3s ease",alignSelf:"stretch",position:"relative",minHeight:ex?160:80,overflow:"hidden"}}>
           <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
         </div>}
-        <div style={{padding:"14px 18px",flex:1,minWidth:0}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+        <div style={{padding:"10px 14px",flex:1,minWidth:0}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                <h3 style={{margin:0,fontSize:16,fontFamily:"var(--head)",fontWeight:700,color:C.text}}>{addrContent}</h3>
-                <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
-                {h.sold && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
-                {h.pending && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
-                {h.tooExpensive && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>TOO EXPENSIVE</span>}
-                {h.tourStatus && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:C.inputBg,color:C.textMuted,fontFamily:"var(--body)"}}>{h.tourStatus}</span>}
+              <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                <h3 style={{margin:0,fontSize:14,fontFamily:"var(--head)",fontWeight:700,color:C.text}}>{addrContent}</h3>
+                <span style={{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:5,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
+                {h.sold && <span style={{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:5,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
+                {h.pending && <span style={{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:5,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
+                {h.tooExpensive && <span style={{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:5,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
               </div>
-              <div style={{fontSize:12,color:C.textMuted,marginTop:2,fontFamily:"var(--body)"}}>{h.city}{h.neighborhood ? " · " + h.neighborhood : ""} · {h.style}</div>
+              <div style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>{h.city}{h.neighborhood ? " · " + h.neighborhood : ""} · {h.style}</div>
             </div>
-            <div style={{textAlign:"right",minWidth:110,flexShrink:0}}>
-              <div style={{fontSize:20,fontWeight:800,color:C.primary,fontFamily:"var(--head)"}}>${h.price.toLocaleString()}</div>
-              <div style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>${ppsf}/sqft · {h.sqft.toLocaleString()}</div>
+            <div style={{textAlign:"right",flexShrink:0}}>
+              <div style={{fontSize:18,fontWeight:800,color:C.primary,fontFamily:"var(--head)"}}>${h.price.toLocaleString()}</div>
+              <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)"}}>{h.sqft.toLocaleString()} sqft</div>
             </div>
           </div>
-          <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:8,fontSize:12,fontFamily:"var(--body)"}}>
-            <span style={{color:C.textMuted}}>Bed <strong style={{color:C.text}}>{h.bed}</strong></span>
-            <span style={{color:C.textMuted}}>Bath <strong style={{color:C.text}}>{h.bath}</strong></span>
-            <span style={{color:C.textMuted}}>Kitchen <strong style={{color:C.text}}>{h.kitchen}</strong></span>
-            <span style={{color:C.textMuted}}>Parking <strong style={{color:C.text}}>{h.parking}</strong></span>
-            <span style={{color:C.textMuted}}>HOA <strong style={{color:h.hoa>400?"#dc3545":C.text}}>{h.hoa>0?"$"+h.hoa:"—"}</strong></span>
-            <span style={{color:C.textMuted}}>15yr <strong style={{color:C.text}}>${fmtNum(tot15)}</strong></span>
-            <span style={{color:C.textMuted}}>30yr <strong style={{color:C.primary}}>${fmtNum(tot30)}</strong></span>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",fontSize:11,fontFamily:"var(--body)",alignItems:"center"}}>
+            <span style={{color:C.textMuted}}>{h.bed}bd/{h.bath}ba</span>
+            <span style={{color:C.primary,fontWeight:700}}>${fmtNum(tot30)}/mo</span>
+            {h.commute != null && <span style={{color:"#0d6efd",fontWeight:600}}>{"🚗 "+h.commute+"min"}</span>}
             <RatingBar label="M" value={mR} color="#e83e8c" />
             <RatingBar label="P" value={pR} color={C.primary} />
-            {tR != null && <span style={{fontSize:13,fontWeight:700,color:C.text,fontFamily:"var(--body)",background:C.inputBg,padding:"1px 8px",borderRadius:7}}>{"Σ " + tR + ((mR==null||pR==null)?"*":"")}</span>}
-            {h.commute != null && <span style={{fontSize:11,fontWeight:600,color:"#0d6efd",fontFamily:"var(--body)",background:"#0d6efd11",padding:"1px 7px",borderRadius:5,marginLeft:"auto"}}>{"🚗 " + h.commute + " min"}</span>}
-            {h.notes && <span style={{fontSize:12,color:C.textMuted,fontStyle:"italic"}}>{h.notes}</span>}
+            {tR != null && <span style={{fontSize:11,fontWeight:700,color:C.text,background:C.inputBg,padding:"0px 6px",borderRadius:5}}>{"Σ"+tR+((mR==null||pR==null)?"*":"")}</span>}
+            {onMap && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:10,fontFamily:"var(--body)",padding:"2px 0"}}>📍 MAP</button>}
           </div>
-          <div style={{display:"flex",gap:12,marginTop:8}}>
-            <button onClick={function(){tog(h.id)}} style={{background:"none",border:"none",color:C.textMuted,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",padding:"4px 0"}}>{ex ? "▲ COLLAPSE" : canEdit ? "▼ EDIT / DETAILS" : "▼ DETAILS"}</button>
-            {onMap && <button onClick={function(){onMap(h)}} style={{background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:11,fontFamily:"var(--body)",padding:"4px 0"}}>📍 SHOW ON MAP</button>}
-          </div>
-          {ex && <div style={{marginTop:12,padding:14,background:C.inputBg,borderRadius:10,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
-            {canEdit ? <EF label="Address" value={h.address} onChange={function(v){u(h.id,"address",v)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>ADDRESS</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.address}</div></div>}
-            {canEdit ? <EF label="City" value={h.city} onChange={function(v){u(h.id,"city",v)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>CITY</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.city}</div></div>}
-            {canEdit ? <EF label="Neighborhood" value={h.neighborhood} onChange={function(v){u(h.id,"neighborhood",v)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>NEIGHBORHOOD</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.neighborhood||"—"}</div></div>}
-            {canEdit ? <EF label="Price" value={h.price} type="number" onChange={function(v){u(h.id,"price",parseFloat(v)||0)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>PRICE</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>${h.price.toLocaleString()}</div></div>}
-            {canEdit ? <EF label="Sq Ft" value={h.sqft} type="number" onChange={function(v){u(h.id,"sqft",parseFloat(v)||0)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>SQ FT</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.sqft.toLocaleString()}</div></div>}
-            {canEdit ? <EF label="Down Pmt" value={dp} type="number" onChange={function(v){u(h.id,"downPayment",parseFloat(v)||0)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>DOWN PMT</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>${fmtNum(dp)}</div></div>}
-            {canEdit && <EF label="HOA" value={h.hoa} type="number" onChange={function(v){u(h.id,"hoa",parseFloat(v)||0)}} />}
-            {canEdit && <EF label="Commute" value={h.commute||""} type="number" onChange={function(v){u(h.id,"commute",v?parseFloat(v):null)}} />}
-            {canEdit && <EF label="Beds" value={h.bed} type="number" onChange={function(v){u(h.id,"bed",parseFloat(v)||0)}} />}
-            {canEdit && <EF label="Baths" value={h.bath} type="number" onChange={function(v){u(h.id,"bath",parseFloat(v)||0)}} />}
-            {canEdit && <ES label="Kitchen" value={h.kitchen} options={K_OPTS} onChange={function(v){u(h.id,"kitchen",v)}} />}
-            {canEdit && <ES label="Style" value={h.style} options={S_OPTS} onChange={function(v){u(h.id,"style",v)}} />}
-            {canEdit && <ES label="Parking" value={h.parking} options={P_OPTS} onChange={function(v){u(h.id,"parking",v)}} />}
-            {canEdit && <div style={{gridColumn:"span 1"}}>
-              <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>MARKET STATUS</label>
-              <div style={{display:"flex",gap:12,alignItems:"center",marginTop:4,flexWrap:"wrap"}}>
-                <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:12,fontFamily:"var(--body)",color:h.sold?"#dc3545":C.text}}>
-                  <input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked){u(h.id,"pending",false);u(h.id,"tooExpensive",false)}}} /> Sold
-                </label>
-                <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:12,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}>
-                  <input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"tooExpensive",false)}}} /> Pending
-                </label>
-                <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:12,fontFamily:"var(--body)",color:h.tooExpensive?"#6f42c1":C.text}}>
-                  <input type="checkbox" checked={!!h.tooExpensive} onChange={function(e){u(h.id,"tooExpensive",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false)}}} /> Too Expensive
-                </label>
-              </div>
-            </div>}
-            {canEdit && <div style={{gridColumn:"span 1"}}>
-              <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>AUTO RATING</label>
-              <div style={{fontSize:13,fontWeight:700,color:sc,fontFamily:"var(--body)",marginTop:4}}>{computedStatus}{(h.sold?" (SOLD)":h.pending?" (PENDING)":h.tooExpensive?" (TOO EXPENSIVE)":"")}</div>
-            </div>}
-            {canEdit && <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />}
-            {canEdit && <EF label="Tour Status" value={h.tourStatus||""} onChange={function(v){u(h.id,"tourStatus",v)}} />}
-            {canEdit && <EF label="Michelle (/10)" value={h.michelleRating!=null?h.michelleRating:""} type="number" onChange={function(v){u(h.id,"michelleRating",v===""?null:parseFloat(v))}} />}
-            {canEdit && <EF label="Peter (/10)" value={h.peterRating!=null?h.peterRating:""} type="number" onChange={function(v){u(h.id,"peterRating",v===""?null:parseFloat(v))}} />}
-            {canEdit && <EF label="Photo URL" value={h.photoUrl||""} onChange={function(v){u(h.id,"photoUrl",v)}} />}
-            {canEdit && <EF label="Notes" value={h.notes||""} onChange={function(v){u(h.id,"notes",v)}} />}
-            <div style={{gridColumn:"1/-1",borderTop:"1px solid "+C.cardBorder,paddingTop:10,marginTop:4}}>
-              <div style={{display:"flex",gap:18,flexWrap:"wrap",fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>
-                <span>15yr: <strong style={{color:C.text}}>${fmtNum(m15)}/mo</strong></span>
-                <span>30yr: <strong style={{color:C.primary}}>${fmtNum(m30)}/mo</strong></span>
-                <span>Ins: <strong style={{color:C.text}}>${fmtNum(ins)}/mo</strong></span>
-                <span>Tax: <strong style={{color:C.text}}>${fmtNum(tax)}/mo</strong></span>
-                <span>15yr Total: <strong style={{color:"#e83e8c"}}>${fmtNum(tot15)}/mo</strong></span>
-                <span>30yr Total: <strong style={{color:"#e83e8c"}}>${fmtNum(tot30)}/mo</strong></span>
-                <span>Loan: <strong style={{color:C.text}}>${ln.toLocaleString()}</strong></span>
-              </div>
-            </div>
-            {canEdit && <div style={{gridColumn:"1/-1",display:"flex",justifyContent:"flex-end"}}>
-              <button onClick={function(){if(window.confirm("Are you sure you want to delete this listing?\n\n"+h.address))del(h.id)}} style={{background:"#dc354511",color:"#dc3545",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
-            </div>}
-          </div>}
         </div>
       </div>
+      {ex && <div style={{borderTop:"1px solid "+C.cardBorder,padding:"14px 16px",background:C.inputBg}} onClick={function(e){e.stopPropagation()}}>
+        <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>
+          <span>Kitchen <strong style={{color:C.text}}>{h.kitchen}</strong></span>
+          <span>Parking <strong style={{color:C.text}}>{h.parking}</strong></span>
+          <span>HOA <strong style={{color:h.hoa>400?"#dc3545":C.text}}>{h.hoa>0?"$"+h.hoa:"—"}</strong></span>
+          <span>15yr <strong style={{color:C.text}}>${fmtNum(tot15)}/mo</strong></span>
+          <span>30yr <strong style={{color:C.primary}}>${fmtNum(tot30)}/mo</strong></span>
+          <span>Down <strong style={{color:C.text}}>${fmtNum(dp)}</strong></span>
+          <span>Loan <strong style={{color:C.text}}>${ln.toLocaleString()}</strong></span>
+          {h.tourStatus && <span>Tour <strong style={{color:C.text}}>{h.tourStatus}</strong></span>}
+          {h.notes && <span style={{fontStyle:"italic"}}>{h.notes}</span>}
+        </div>
+        <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12,paddingBottom:12,borderBottom:"1px solid "+C.cardBorder}}>
+          <span>15yr P&I: <strong style={{color:C.text}}>${fmtNum(m15)}/mo</strong></span>
+          <span>30yr P&I: <strong style={{color:C.primary}}>${fmtNum(m30)}/mo</strong></span>
+          <span>Ins: <strong style={{color:C.text}}>${fmtNum(ins)}/mo</strong></span>
+          <span>Tax: <strong style={{color:C.text}}>${fmtNum(tax)}/mo</strong></span>
+        </div>
+        {canEdit && <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+          <EF label="Address" value={h.address} onChange={function(v){u(h.id,"address",v)}} />
+          <EF label="City" value={h.city} onChange={function(v){u(h.id,"city",v)}} />
+          <EF label="Neighborhood" value={h.neighborhood} onChange={function(v){u(h.id,"neighborhood",v)}} />
+          <EF label="Price" value={h.price} type="number" onChange={function(v){u(h.id,"price",parseFloat(v)||0)}} />
+          <EF label="Sq Ft" value={h.sqft} type="number" onChange={function(v){u(h.id,"sqft",parseFloat(v)||0)}} />
+          <EF label="Down Pmt" value={dp} type="number" onChange={function(v){u(h.id,"downPayment",parseFloat(v)||0)}} />
+          <EF label="HOA" value={h.hoa} type="number" onChange={function(v){u(h.id,"hoa",parseFloat(v)||0)}} />
+          <EF label="Commute" value={h.commute||""} type="number" onChange={function(v){u(h.id,"commute",v?parseFloat(v):null)}} />
+          <EF label="Beds" value={h.bed} type="number" onChange={function(v){u(h.id,"bed",parseFloat(v)||0)}} />
+          <EF label="Baths" value={h.bath} type="number" onChange={function(v){u(h.id,"bath",parseFloat(v)||0)}} />
+          <ES label="Kitchen" value={h.kitchen} options={K_OPTS} onChange={function(v){u(h.id,"kitchen",v)}} />
+          <ES label="Style" value={h.style} options={S_OPTS} onChange={function(v){u(h.id,"style",v)}} />
+          <ES label="Parking" value={h.parking} options={P_OPTS} onChange={function(v){u(h.id,"parking",v)}} />
+          <div>
+            <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>MARKET STATUS</label>
+            <div style={{display:"flex",gap:10,alignItems:"center",marginTop:4,flexWrap:"wrap"}}>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.sold?"#dc3545":C.text}}><input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked){u(h.id,"pending",false);u(h.id,"tooExpensive",false)}}} /> Sold</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}><input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"tooExpensive",false)}}} /> Pending</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tooExpensive?"#6f42c1":C.text}}><input type="checkbox" checked={!!h.tooExpensive} onChange={function(e){u(h.id,"tooExpensive",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false)}}} /> $$$</label>
+            </div>
+          </div>
+          <div>
+            <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>AUTO RATING</label>
+            <div style={{fontSize:13,fontWeight:700,color:sc,fontFamily:"var(--body)",marginTop:4}}>{computedStatus}</div>
+          </div>
+          <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />
+          <EF label="Tour Status" value={h.tourStatus||""} onChange={function(v){u(h.id,"tourStatus",v)}} />
+          <EF label="Michelle (/10)" value={h.michelleRating!=null?h.michelleRating:""} type="number" onChange={function(v){u(h.id,"michelleRating",v===""?null:parseFloat(v))}} />
+          <EF label="Peter (/10)" value={h.peterRating!=null?h.peterRating:""} type="number" onChange={function(v){u(h.id,"peterRating",v===""?null:parseFloat(v))}} />
+          <EF label="Photo URL" value={h.photoUrl||""} onChange={function(v){u(h.id,"photoUrl",v)}} />
+          <EF label="Notes" value={h.notes||""} onChange={function(v){u(h.id,"notes",v)}} />
+          <div style={{gridColumn:"1/-1",display:"flex",justifyContent:"flex-end",paddingTop:8}}>
+            <button onClick={function(e){e.stopPropagation();if(window.confirm("Are you sure you want to delete this listing?\n\n"+h.address))del(h.id)}} style={{background:"#dc354511",color:"#dc3545",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
+          </div>
+        </div>}
+        {!canEdit && <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>ADDRESS</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.address}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>CITY</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.city}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>NEIGHBORHOOD</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.neighborhood||"—"}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>PRICE</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>${h.price.toLocaleString()}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>SQ FT</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.sqft.toLocaleString()}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>DOWN PMT</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>${fmtNum(dp)}</div></div>
+        </div>}
+      </div>}
     </div>
   );
 }
-
-/* ─── Passcode Login ─── */
-function LoginScreen(props) {
-  var _p = useState(""); var pw = _p[0]; var setPw = _p[1];
-  var _err = useState(""); var err = _err[0]; var setErr = _err[1];
-  var _loading = useState(false); var loading = _loading[0]; var setLoading = _loading[1];
-
-  function go() {
-    if (!pw) return;
-    setLoading(true); setErr("");
-    signInWithEmailAndPassword(auth, AUTH_EMAIL, pw)
-      .then(function() { props.onAuth(true); })
-      .catch(function() { setErr("Incorrect passcode"); setLoading(false); });
-  }
-
-  return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg, "+C.primary+" 0%, "+C.primaryDark+" 100%)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--body)"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}input:focus{border-color:${C.primary}!important;outline:none}`}</style>
-      <div style={{background:C.card,borderRadius:20,padding:40,width:"90%",maxWidth:380,border:"1px solid "+C.cardBorder,textAlign:"center",boxShadow:"0 8px 32px #0002"}}>
-        <div style={{width:56,height:56,borderRadius:14,background:C.primary,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 16px",color:"#fff"}}>🏠</div>
-        <h1 style={{margin:"0 0 4px",fontSize:28,fontWeight:700,color:C.text,fontFamily:"var(--head)"}}>Home Search HQ</h1>
-        <p style={{margin:"0 0 24px",fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>Enter passcode to continue</p>
-        <input type="password" value={pw} onChange={function(e){setPw(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter")go()}} placeholder="Passcode"
-          style={{width:"100%",background:C.inputBg,border:"1px solid " + (err ? "#dc3545" : C.inputBorder),borderRadius:10,padding:"12px 16px",color:C.text,fontSize:15,fontFamily:"var(--body)",textAlign:"center",marginBottom:14,outline:"none"}} />
-        {err && <p style={{margin:"0 0 10px",fontSize:12,color:"#dc3545",fontFamily:"var(--body)"}}>{err}</p>}
-        <button onClick={go} disabled={loading} style={{width:"100%",background:loading?C.cardBorder:C.primary,color:"#fff",border:"none",borderRadius:10,padding:"12px",cursor:"pointer",fontSize:14,fontFamily:"var(--body)",fontWeight:700}}>{loading ? "Signing in..." : "Enter"}</button>
-      </div>
-    </div>
-  );
-}
-
 /* ─── Edit Mode Login Modal ─── */
 function EditLoginModal(props) {
   var _p = useState(""); var pw = _p[0]; var setPw = _p[1];
