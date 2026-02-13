@@ -13,7 +13,7 @@ var S_OPTS = ["House","Townhouse","Condo"];
 var P_OPTS = ["None","Reserved (1)","Reserved (2)","Garage (1)","Garage (2)"];
 var BED_OPTS = ["1","2","3","4+"];
 var BATH_OPTS = ["1","1.5","2","2.5","3+"];
-var GMAPS_CLIENT_KEY = ""; // Paste your Google Maps JS API key here
+var GMAPS_CLIENT_KEY = "AIzaSyCxX5eVLsbZfPzRlOqKUz5HlS_M8OStBJ8"; // Paste your Google Maps JS API key here
 var AUTH_EMAIL = "home@search.hq";
 
 /* ─── Color Palette (matches huynh.place / bet.huynh.place) ─── */
@@ -560,9 +560,9 @@ function HomeCard(props) {
   return (
     <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,overflow:"hidden",boxShadow:"0 1px 4px #0001"}}>
       <div style={{height:4,background:sc}} />
-      <div style={{display:"flex",alignItems:"stretch"}}>
-        {h.photoUrl && <div style={{width:ex?250:120,flexShrink:0,overflow:"hidden",background:C.inputBg,transition:"width 0.3s ease"}}>
-          <img src={h.photoUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
+      <div style={{display:"flex"}}>
+        {h.photoUrl && <div style={{width:ex?250:120,flexShrink:0,background:C.inputBg,transition:"width 0.3s ease",alignSelf:"stretch",position:"relative",minHeight:ex?200:100,overflow:"hidden"}}>
+          <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
         </div>}
         <div style={{padding:"14px 18px",flex:1,minWidth:0}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
@@ -629,7 +629,7 @@ function HomeCard(props) {
               </div>
             </div>
             {canEdit && <div style={{gridColumn:"1/-1",display:"flex",justifyContent:"flex-end"}}>
-              <button onClick={function(){del(h.id)}} style={{background:"#dc354511",color:"#dc3545",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
+              <button onClick={function(){if(window.confirm("Are you sure you want to delete this listing?\n\n"+h.address))del(h.id)}} style={{background:"#dc354511",color:"#dc3545",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
             </div>}
           </div>}
         </div>
