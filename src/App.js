@@ -233,6 +233,7 @@ function loadGmapsScript(key, cb) {
 function MapPanel(props) {
   var homes = props.homes;
   var gmapsKey = props.gmapsKey;
+  var onSelectHome = props.onSelectHome;
   var _s = useState(false); var open = _s[0]; var setOpen = _s[1];
   var _ready = useState(false); var ready = _ready[0]; var setReady = _ready[1];
   var mapRef = React.useRef(null);
@@ -242,6 +243,14 @@ function MapPanel(props) {
   var infoRef = React.useRef(null);
   var geocacheRef = React.useRef({});
   var workMarkerRef = React.useRef(null);
+
+  // Wire up global click handler for info window address links
+  useEffect(function() {
+    window._hshqSelect = function(id) {
+      if (onSelectHome) onSelectHome(id);
+    };
+    return function() { delete window._hshqSelect; };
+  }, [onSelectHome]);
 
   useEffect(function() {
     if (!open || !gmapsKey) return;
@@ -344,8 +353,10 @@ function MapPanel(props) {
           div.addEventListener("mouseout", function() { div.style.transform = "scale(1)"; div.style.zIndex = self.home.status === "Good" ? "100" : self.home.status === "Out" ? "1" : "50"; });
           div.addEventListener("click", function() {
             var hh = self.home;
-            var content = '<div style="font-family:Muli,sans-serif;color:#212529;max-width:220px">' +
-              '<strong style="font-size:13px">' + hh.address + '</strong><br>' +
+            var photoHtml = hh.photoUrl ? '<img src="' + hh.photoUrl + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:6px;display:block" onerror="this.style.display=\'none\'" />' : '';
+            var content = '<div style="font-family:Muli,sans-serif;color:#212529;max-width:240px;min-width:180px">' +
+              photoHtml +
+              '<a href="#" onclick="window._hshqSelect(\'' + hh.id + '\');return false;" style="font-size:13px;font-weight:700;color:#55c278;text-decoration:none;cursor:pointer;display:block;margin-bottom:2px">' + hh.address + '</a>' +
               '<span style="font-size:12px;color:#6c757d">' + hh.city + (hh.neighborhood ? " · " + hh.neighborhood : "") + '</span><br>' +
               '<span style="font-size:13px;font-weight:700;color:#55c278">$' + hh.price.toLocaleString() + '</span>' +
               '<span style="font-size:11px;color:#888"> · ' + hh.sqft + ' sqft</span><br>' +
@@ -558,7 +569,7 @@ function HomeCard(props) {
     : h.address;
 
   return (
-    <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,overflow:"hidden",boxShadow:"0 1px 4px #0001"}}>
+    <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,overflow:"hidden",boxShadow:"0 1px 4px #0001"}}>
       <div style={{height:4,background:sc}} />
       <div style={{display:"flex"}}>
         {h.photoUrl && <div style={{width:ex?"40%":"120px",minWidth:ex?300:120,flexShrink:0,background:C.inputBg,transition:"all 0.3s ease",alignSelf:"stretch",position:"relative",minHeight:ex?200:100,overflow:"hidden"}}>
@@ -759,11 +770,12 @@ function Dashboard(props) {
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"var(--body)",color:C.text}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}@media(min-width:1600px){.hshq-scale{zoom:1.25}}@media(min-width:2200px){.hshq-scale{zoom:1.4}}`}</style>
 
+      <div className="hshq-scale">
       {/* Green Header Banner */}
       <div style={{background:C.primary,padding:"24px 20px 20px",marginBottom:0}}>
-        <div style={{maxWidth:960,margin:"0 auto",display:"flex",alignItems:"center",gap:12}}>
+        <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:40,height:40,borderRadius:10,background:"rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏠</div>
           <div style={{flex:1}}>
             <h1 style={{margin:0,fontSize:30,fontWeight:700,letterSpacing:"-0.01em",color:"#fff",fontFamily:"var(--head)"}}>Home Search HQ</h1>
@@ -776,7 +788,7 @@ function Dashboard(props) {
         </div>
       </div>
 
-      <div style={{maxWidth:960,margin:"0 auto",padding:"20px 20px 28px"}}>
+      <div style={{maxWidth:1100,margin:"0 auto",padding:"20px 20px 28px"}}>
 
         <MortgageBar cfg={cfg} onChange={setCfg} />
 
@@ -795,7 +807,13 @@ function Dashboard(props) {
         </div>
 
         <FilterPanel filters={filters} onChange={setFilters} />
-        <MapPanel homes={filtered} gmapsKey={GMAPS_CLIENT_KEY} />
+        <MapPanel homes={filtered} gmapsKey={GMAPS_CLIENT_KEY} onSelectHome={function(id){
+          setExId(id);
+          setTimeout(function(){
+            var el = document.getElementById("home-card-" + id);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 100);
+        }} />
 
         <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
           <input type="text" placeholder="Search address, city, notes..." value={search} onChange={function(e){setSearch(e.target.value)}}
@@ -827,6 +845,7 @@ function Dashboard(props) {
           <div style={{fontSize:14,fontFamily:"var(--body)"}}>No homes match your filters</div>
         </div>}
       </div>
+      </div>{/* end hshq-scale */}
       {modal === "url" && <UrlModal onAdd={add} onClose={function(){setModal(null)}} cfg={cfg} />}
       {modal === "manual" && <ManualModal onAdd={add} onClose={function(){setModal(null)}} />}
       {showLogin && <EditLoginModal onSuccess={function(){setShowLogin(false)}} onClose={function(){setShowLogin(false)}} />}
