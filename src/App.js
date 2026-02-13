@@ -539,7 +539,7 @@ function ManualModal(props) {
 
 /* ─── Home Card ─── */
 function HomeCard(props) {
-  var h = props.home, u = props.onUpdate, del = props.onDelete, ex = props.expanded, tog = props.onToggle, cfg = props.cfg;
+  var h = props.home, u = props.onUpdate, del = props.onDelete, ex = props.expanded, tog = props.onToggle, cfg = props.cfg, canEdit = props.canEdit;
   var dp = h.downPayment != null ? h.downPayment : calcDown(h.price, cfg);
   var ln = h.price - dp;
   var m30 = calcPmt(cfg.rate30, cfg.term30, ln);
@@ -595,28 +595,28 @@ function HomeCard(props) {
             {h.commute != null && <span style={{fontSize:11,fontWeight:600,color:"#0d6efd",fontFamily:"var(--body)",background:"#0d6efd11",padding:"1px 7px",borderRadius:5,marginLeft:"auto"}}>{"🚗 " + h.commute + " min"}</span>}
             {h.notes && <span style={{fontSize:12,color:C.textMuted,fontStyle:"italic"}}>{h.notes}</span>}
           </div>
-          <button onClick={function(){tog(h.id)}} style={{background:"none",border:"none",color:C.textMuted,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",marginTop:8,padding:"4px 0"}}>{ex ? "▲ COLLAPSE" : "▼ EDIT / DETAILS"}</button>
+          <button onClick={function(){tog(h.id)}} style={{background:"none",border:"none",color:C.textMuted,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",marginTop:8,padding:"4px 0"}}>{ex ? "▲ COLLAPSE" : canEdit ? "▼ EDIT / DETAILS" : "▼ DETAILS"}</button>
           {ex && <div style={{marginTop:12,padding:14,background:C.inputBg,borderRadius:10,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
-            <EF label="Address" value={h.address} onChange={function(v){u(h.id,"address",v)}} />
-            <EF label="City" value={h.city} onChange={function(v){u(h.id,"city",v)}} />
-            <EF label="Neighborhood" value={h.neighborhood} onChange={function(v){u(h.id,"neighborhood",v)}} />
-            <EF label="Price" value={h.price} type="number" onChange={function(v){u(h.id,"price",parseFloat(v)||0)}} />
-            <EF label="Sq Ft" value={h.sqft} type="number" onChange={function(v){u(h.id,"sqft",parseFloat(v)||0)}} />
-            <EF label="Down Pmt" value={dp} type="number" onChange={function(v){u(h.id,"downPayment",parseFloat(v)||0)}} />
-            <EF label="HOA" value={h.hoa} type="number" onChange={function(v){u(h.id,"hoa",parseFloat(v)||0)}} />
-            <EF label="Commute" value={h.commute||""} type="number" onChange={function(v){u(h.id,"commute",v?parseFloat(v):null)}} />
-            <EF label="Beds" value={h.bed} type="number" onChange={function(v){u(h.id,"bed",parseFloat(v)||0)}} />
-            <EF label="Baths" value={h.bath} type="number" onChange={function(v){u(h.id,"bath",parseFloat(v)||0)}} />
-            <ES label="Kitchen" value={h.kitchen} options={K_OPTS} onChange={function(v){u(h.id,"kitchen",v)}} />
-            <ES label="Style" value={h.style} options={S_OPTS} onChange={function(v){u(h.id,"style",v)}} />
-            <ES label="Parking" value={h.parking} options={P_OPTS} onChange={function(v){u(h.id,"parking",v)}} />
-            <ES label="Status" value={h.status} options={STATUSES} onChange={function(v){u(h.id,"status",v)}} />
-            <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />
-            <EF label="Tour Status" value={h.tourStatus||""} onChange={function(v){u(h.id,"tourStatus",v)}} />
-            <EF label="Michelle (/10)" value={h.michelleRating!=null?h.michelleRating:""} type="number" onChange={function(v){u(h.id,"michelleRating",v===""?null:parseFloat(v))}} />
-            <EF label="Peter (/10)" value={h.peterRating!=null?h.peterRating:""} type="number" onChange={function(v){u(h.id,"peterRating",v===""?null:parseFloat(v))}} />
-            <EF label="Photo URL" value={h.photoUrl||""} onChange={function(v){u(h.id,"photoUrl",v)}} />
-            <EF label="Notes" value={h.notes||""} onChange={function(v){u(h.id,"notes",v)}} />
+            {canEdit ? <EF label="Address" value={h.address} onChange={function(v){u(h.id,"address",v)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>ADDRESS</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.address}</div></div>}
+            {canEdit ? <EF label="City" value={h.city} onChange={function(v){u(h.id,"city",v)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>CITY</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.city}</div></div>}
+            {canEdit ? <EF label="Neighborhood" value={h.neighborhood} onChange={function(v){u(h.id,"neighborhood",v)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>NEIGHBORHOOD</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.neighborhood||"—"}</div></div>}
+            {canEdit ? <EF label="Price" value={h.price} type="number" onChange={function(v){u(h.id,"price",parseFloat(v)||0)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>PRICE</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>${h.price.toLocaleString()}</div></div>}
+            {canEdit ? <EF label="Sq Ft" value={h.sqft} type="number" onChange={function(v){u(h.id,"sqft",parseFloat(v)||0)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>SQ FT</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.sqft.toLocaleString()}</div></div>}
+            {canEdit ? <EF label="Down Pmt" value={dp} type="number" onChange={function(v){u(h.id,"downPayment",parseFloat(v)||0)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>DOWN PMT</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>${fmtNum(dp)}</div></div>}
+            {canEdit && <EF label="HOA" value={h.hoa} type="number" onChange={function(v){u(h.id,"hoa",parseFloat(v)||0)}} />}
+            {canEdit && <EF label="Commute" value={h.commute||""} type="number" onChange={function(v){u(h.id,"commute",v?parseFloat(v):null)}} />}
+            {canEdit && <EF label="Beds" value={h.bed} type="number" onChange={function(v){u(h.id,"bed",parseFloat(v)||0)}} />}
+            {canEdit && <EF label="Baths" value={h.bath} type="number" onChange={function(v){u(h.id,"bath",parseFloat(v)||0)}} />}
+            {canEdit && <ES label="Kitchen" value={h.kitchen} options={K_OPTS} onChange={function(v){u(h.id,"kitchen",v)}} />}
+            {canEdit && <ES label="Style" value={h.style} options={S_OPTS} onChange={function(v){u(h.id,"style",v)}} />}
+            {canEdit && <ES label="Parking" value={h.parking} options={P_OPTS} onChange={function(v){u(h.id,"parking",v)}} />}
+            {canEdit && <ES label="Status" value={h.status} options={STATUSES} onChange={function(v){u(h.id,"status",v)}} />}
+            {canEdit && <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />}
+            {canEdit && <EF label="Tour Status" value={h.tourStatus||""} onChange={function(v){u(h.id,"tourStatus",v)}} />}
+            {canEdit && <EF label="Michelle (/10)" value={h.michelleRating!=null?h.michelleRating:""} type="number" onChange={function(v){u(h.id,"michelleRating",v===""?null:parseFloat(v))}} />}
+            {canEdit && <EF label="Peter (/10)" value={h.peterRating!=null?h.peterRating:""} type="number" onChange={function(v){u(h.id,"peterRating",v===""?null:parseFloat(v))}} />}
+            {canEdit && <EF label="Photo URL" value={h.photoUrl||""} onChange={function(v){u(h.id,"photoUrl",v)}} />}
+            {canEdit && <EF label="Notes" value={h.notes||""} onChange={function(v){u(h.id,"notes",v)}} />}
             <div style={{gridColumn:"1/-1",borderTop:"1px solid "+C.cardBorder,paddingTop:10,marginTop:4}}>
               <div style={{display:"flex",gap:18,flexWrap:"wrap",fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>
                 <span>15yr: <strong style={{color:C.text}}>${fmtNum(m15)}/mo</strong></span>
@@ -628,9 +628,9 @@ function HomeCard(props) {
                 <span>Loan: <strong style={{color:C.text}}>${ln.toLocaleString()}</strong></span>
               </div>
             </div>
-            <div style={{gridColumn:"1/-1",display:"flex",justifyContent:"flex-end"}}>
+            {canEdit && <div style={{gridColumn:"1/-1",display:"flex",justifyContent:"flex-end"}}>
               <button onClick={function(){del(h.id)}} style={{background:"#dc354511",color:"#dc3545",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
-            </div>
+            </div>}
           </div>}
         </div>
       </div>
@@ -668,8 +668,42 @@ function LoginScreen(props) {
   );
 }
 
+/* ─── Edit Mode Login Modal ─── */
+function EditLoginModal(props) {
+  var _p = useState(""); var pw = _p[0]; var setPw = _p[1];
+  var _err = useState(""); var err = _err[0]; var setErr = _err[1];
+  var _loading = useState(false); var loading = _loading[0]; var setLoading = _loading[1];
+
+  function go() {
+    if (!pw) return;
+    setLoading(true); setErr("");
+    signInWithEmailAndPassword(auth, AUTH_EMAIL, pw)
+      .then(function() { props.onSuccess(); })
+      .catch(function() { setErr("Incorrect passcode"); setLoading(false); });
+  }
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"#00000066",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,backdropFilter:"blur(4px)"}} onClick={props.onClose}>
+      <div style={{background:C.card,borderRadius:16,padding:32,width:"90%",maxWidth:360,border:"1px solid "+C.cardBorder,textAlign:"center",boxShadow:"0 8px 32px #0002"}} onClick={function(e){e.stopPropagation()}}>
+        <div style={{width:48,height:48,borderRadius:12,background:C.primary,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,margin:"0 auto 14px",color:"#fff"}}>✏️</div>
+        <h2 style={{margin:"0 0 4px",fontSize:22,fontWeight:700,color:C.text,fontFamily:"var(--head)"}}>Edit Mode</h2>
+        <p style={{margin:"0 0 18px",fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>Enter passcode to unlock editing</p>
+        <input type="password" value={pw} onChange={function(e){setPw(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter")go()}} placeholder="Passcode"
+          style={{width:"100%",background:C.inputBg,border:"1px solid " + (err ? "#dc3545" : C.inputBorder),borderRadius:10,padding:"12px 16px",color:C.text,fontSize:15,fontFamily:"var(--body)",textAlign:"center",marginBottom:12,outline:"none"}} />
+        {err && <p style={{margin:"0 0 10px",fontSize:12,color:"#dc3545",fontFamily:"var(--body)"}}>{err}</p>}
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={props.onClose} style={{flex:1,background:C.inputBg,color:C.textMuted,border:"1px solid "+C.cardBorder,borderRadius:10,padding:"12px",cursor:"pointer",fontSize:14,fontFamily:"var(--body)",fontWeight:600}}>Cancel</button>
+          <button onClick={go} disabled={loading} style={{flex:1,background:loading?C.cardBorder:C.primary,color:"#fff",border:"none",borderRadius:10,padding:"12px",cursor:"pointer",fontSize:14,fontFamily:"var(--body)",fontWeight:700}}>{loading ? "..." : "Unlock"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Dashboard ─── */
-function Dashboard() {
+function Dashboard(props) {
+  var canEdit = props.canEdit;
+  var onAuth = props.onAuth;
   var _h = useState([]); var homes = _h[0]; var setHomes = _h[1];
   var _ex = useState(null); var exId = _ex[0]; var setExId = _ex[1];
   var _m = useState(null); var modal = _m[0]; var setModal = _m[1];
@@ -679,6 +713,7 @@ function Dashboard() {
   var _cfg = useState(DEFAULT_CFG); var cfg = _cfg[0]; var setCfg = _cfg[1];
   var _fi = useState({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[]});
   var filters = _fi[0]; var setFilters = _fi[1];
+  var _showLogin = useState(false); var showLogin = _showLogin[0]; var setShowLogin = _showLogin[1];
 
   useEffect(function() {
     var unsub = onSnapshot(collection(db, "homes"), function(snap) {
@@ -734,7 +769,10 @@ function Dashboard() {
             <h1 style={{margin:0,fontSize:30,fontWeight:700,letterSpacing:"-0.01em",color:"#fff",fontFamily:"var(--head)"}}>Home Search HQ</h1>
             <p style={{margin:0,fontSize:12,color:"rgba(255,255,255,0.8)",fontFamily:"var(--body)"}}>Peter & Michelle · Denver Metro · {homes.length} properties</p>
           </div>
-          <button onClick={doSignOut} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>Sign Out</button>
+          {canEdit ? <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <span style={{fontSize:10,color:"rgba(255,255,255,0.7)",fontFamily:"var(--body)"}}>✏️ Edit Mode</span>
+            <button onClick={doSignOut} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>Lock</button>
+          </div> : <button onClick={function(){setShowLogin(true)}} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>🔓 Edit Mode</button>}
         </div>
       </div>
 
@@ -772,15 +810,15 @@ function Dashboard() {
             <option value="commute">Commute</option>
           </select>
           {sortBy === "commute" && <button onClick={function(){setComDir(function(d){return d==="asc"?"desc":"asc"})}} style={{background:C.card,color:"#0d6efd",border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>{comDir==="asc"?"↑ Nearest":"↓ Farthest"}</button>}
-          <button onClick={function(){setModal("url")}} style={{background:C.primary,color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:700,whiteSpace:"nowrap"}}>🔗 PASTE LINK</button>
-          <button onClick={function(){setModal("manual")}} style={{background:C.card,color:C.text,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>+ MANUAL</button>
+          {canEdit && <button onClick={function(){setModal("url")}} style={{background:C.primary,color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:700,whiteSpace:"nowrap"}}>🔗 PASTE LINK</button>}
+          {canEdit && <button onClick={function(){setModal("manual")}} style={{background:C.card,color:C.text,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>+ MANUAL</button>}
         </div>
 
         <div style={{fontSize:12,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>Showing {filtered.length} of {homes.length}</div>
 
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {filtered.map(function(h) {
-            return <HomeCard key={h.id} home={h} onUpdate={upd} onDelete={del} expanded={exId===h.id} onToggle={function(id){setExId(function(p){return p===id?null:id})}} cfg={cfg} />;
+            return <HomeCard key={h.id} home={h} onUpdate={upd} onDelete={del} expanded={exId===h.id} onToggle={function(id){setExId(function(p){return p===id?null:id})}} cfg={cfg} canEdit={canEdit} />;
           })}
         </div>
 
@@ -791,6 +829,7 @@ function Dashboard() {
       </div>
       {modal === "url" && <UrlModal onAdd={add} onClose={function(){setModal(null)}} cfg={cfg} />}
       {modal === "manual" && <ManualModal onAdd={add} onClose={function(){setModal(null)}} />}
+      {showLogin && <EditLoginModal onSuccess={function(){setShowLogin(false)}} onClose={function(){setShowLogin(false)}} />}
     </div>
   );
 }
@@ -809,6 +848,5 @@ export default function App() {
   }, []);
 
   if (loading) return null;
-  if (!authed) return <LoginScreen onAuth={setAuthed} />;
-  return <Dashboard />;
+  return <Dashboard canEdit={authed} onAuth={setAuthed} />;
 }
