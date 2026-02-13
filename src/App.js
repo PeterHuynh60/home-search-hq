@@ -166,43 +166,67 @@ function Panel(props) {
   );
 }
 
+/* ─── Mortgage Field (stable - defined outside) ─── */
+function MortgageField(props) {
+  var inputRef = React.useRef(null);
+  var _val = useState(props.value); var val = _val[0]; var setVal = _val[1];
+  var timerRef = React.useRef(null);
+
+  // Sync from parent only when not focused
+  useEffect(function() {
+    if (inputRef.current !== document.activeElement) {
+      setVal(props.value);
+    }
+  }, [props.value]);
+
+  function handleChange(e) {
+    var v = e.target.value;
+    setVal(v);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(function() {
+      props.onCommit(parseFloat(v) || 0);
+    }, 600);
+  }
+
+  function handleBlur() {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    props.onCommit(parseFloat(val) || 0);
+  }
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:3}}>
+      <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600}}>{props.label}</label>
+      <div style={{display:"flex",alignItems:"center",gap:4}}>
+        <input ref={inputRef} type="number" step={props.step||"0.01"} value={val} onChange={handleChange} onBlur={handleBlur}
+          style={{width:80,background:C.inputBg,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none"}} />
+        {props.suffix && <span style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>{props.suffix}</span>}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Mortgage Parameters ─── */
 function MortgageBar(props) {
   var cfg = props.cfg;
   var onChange = props.onChange;
-  var _local = useState(cfg); var localCfg = _local[0]; var setLocalCfg = _local[1];
-  var timerRef = React.useRef(null);
 
-  // Sync from parent when cfg changes externally
-  useEffect(function() { setLocalCfg(cfg); }, [cfg]);
-
-  function handleChange(field, val) {
-    var o = Object.assign({}, localCfg);
+  function commit(field, val) {
+    var o = Object.assign({}, cfg);
     o[field] = val;
-    setLocalCfg(o);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(function() { onChange(o); }, 400);
+    onChange(o);
   }
 
-  function MF(mfProps) {
-    return (
-      <div style={{display:"flex",flexDirection:"column",gap:3}}>
-        <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600}}>{mfProps.label}</label>
-        <div style={{display:"flex",alignItems:"center",gap:4}}>
-          <input type="number" step={mfProps.step||"0.01"} value={localCfg[mfProps.field]} onChange={function(e){handleChange(mfProps.field,parseFloat(e.target.value)||0)}}
-            style={{width:80,background:C.inputBg,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none"}} />
-          {mfProps.suffix && <span style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>{mfProps.suffix}</span>}
-        </div>
-      </div>
-    );
-  }
   return (
     <Panel title="Mortgage Parameters" subtitle={"15yr: " + cfg.rate15 + "% · 30yr: " + cfg.rate30 + "%"}>
       <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-        <MF label="15-YR RATE" field="rate15" suffix="%" /><MF label="30-YR RATE" field="rate30" suffix="%" />
-        <MF label="15-YR TERM" field="term15" suffix="yrs" step="1" /><MF label="30-YR TERM" field="term30" suffix="yrs" step="1" />
-        <MF label="MIN DOWN" field="minDown" suffix="$" step="1000" /><MF label="DOWN %" field="downPct" suffix="%" step="1" />
-        <MF label="INS %" field="insPct" suffix="% ann" /><MF label="TAX %" field="taxPct" suffix="% ann" />
+        <MortgageField label="15-YR RATE" value={cfg.rate15} suffix="%" onCommit={function(v){commit("rate15",v)}} />
+        <MortgageField label="30-YR RATE" value={cfg.rate30} suffix="%" onCommit={function(v){commit("rate30",v)}} />
+        <MortgageField label="15-YR TERM" value={cfg.term15} suffix="yrs" step="1" onCommit={function(v){commit("term15",v)}} />
+        <MortgageField label="30-YR TERM" value={cfg.term30} suffix="yrs" step="1" onCommit={function(v){commit("term30",v)}} />
+        <MortgageField label="MIN DOWN" value={cfg.minDown} suffix="$" step="1000" onCommit={function(v){commit("minDown",v)}} />
+        <MortgageField label="DOWN %" value={cfg.downPct} suffix="%" step="1" onCommit={function(v){commit("downPct",v)}} />
+        <MortgageField label="INS %" value={cfg.insPct} suffix="% ann" onCommit={function(v){commit("insPct",v)}} />
+        <MortgageField label="TAX %" value={cfg.taxPct} suffix="% ann" onCommit={function(v){commit("taxPct",v)}} />
       </div>
     </Panel>
   );
@@ -677,36 +701,31 @@ function HomeCard(props) {
   return (
     <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+(ex?C.primary+"66":C.cardBorder),overflow:"hidden",boxShadow:ex?"0 2px 12px #55c27822":"0 1px 4px #0001",transition:"all 0.2s ease",cursor:"pointer"}} onClick={function(e){if(e.target.tagName!=="INPUT"&&e.target.tagName!=="SELECT"&&e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&!e.target.closest("button")&&!e.target.closest("a")&&!e.target.closest("label"))tog(h.id)}}>
       <div style={{height:3,background:sc}} />
-      <div style={{display:"flex"}}>
-        {h.photoUrl && <div style={{width:ex?220:100,flexShrink:0,background:C.inputBg,transition:"width 0.3s ease",alignSelf:"stretch",position:"relative",minHeight:ex?160:80,overflow:"hidden"}}>
-          <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
-        </div>}
-        <div style={{padding:"10px 14px",flex:1,minWidth:0}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                <h3 style={{margin:0,fontSize:14,fontFamily:"var(--head)",fontWeight:700,color:C.text}}>{addrContent}</h3>
-                <span style={{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:5,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
-                {h.sold && <span style={{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:5,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
-                {h.pending && <span style={{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:5,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
-                {h.tooExpensive && <span style={{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:5,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
-              </div>
-              <div style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>{h.city}{h.neighborhood ? " · " + h.neighborhood : ""} · {h.style}</div>
-            </div>
-            <div style={{textAlign:"right",flexShrink:0}}>
-              <div style={{fontSize:18,fontWeight:800,color:C.primary,fontFamily:"var(--head)"}}>${h.price.toLocaleString()}</div>
-              <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)"}}>{h.sqft.toLocaleString()} sqft</div>
-            </div>
-          </div>
-          <div style={{display:"flex",gap:10,flexWrap:"wrap",fontSize:11,fontFamily:"var(--body)",alignItems:"center"}}>
-            <span style={{color:C.textMuted}}>{h.bed}bd/{h.bath}ba</span>
-            <span style={{color:C.primary,fontWeight:700}}>${fmtNum(tot30)}/mo</span>
-            {h.commute != null && <span style={{color:"#0d6efd",fontWeight:600}}>{"🚗 "+h.commute+"min"}</span>}
-            <RatingBar label="M" value={mR} color="#e83e8c" />
-            <RatingBar label="P" value={pR} color={C.primary} />
-            {tR != null && <span style={{fontSize:11,fontWeight:700,color:C.text,background:C.inputBg,padding:"0px 6px",borderRadius:5}}>{"Σ"+tR+((mR==null||pR==null)?"*":"")}</span>}
-            {onMap && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:10,fontFamily:"var(--body)",padding:"2px 0"}}>📍 MAP</button>}
-          </div>
+      {/* Photo on top */}
+      {h.photoUrl && <div style={{width:"100%",height:ex?180:110,overflow:"hidden",background:C.inputBg,position:"relative"}}>
+        <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
+      </div>}
+      {/* Card Body */}
+      <div style={{padding:"8px 10px 10px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap",marginBottom:2}}>
+          <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
+          {h.sold && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
+          {h.pending && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
+          {h.tooExpensive && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
+        </div>
+        <h3 style={{margin:"0 0 1px",fontSize:12,fontFamily:"var(--head)",fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{addrContent}</h3>
+        <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",marginBottom:4}}>{h.city}{h.neighborhood ? " · "+h.neighborhood : ""}</div>
+        <div style={{fontSize:16,fontWeight:800,color:C.primary,fontFamily:"var(--head)"}}>${h.price.toLocaleString()}</div>
+        <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:4}}>{h.sqft.toLocaleString()} sqft · ${ppsf}/sf · {h.bed}bd/{h.bath}ba</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",fontSize:10,fontFamily:"var(--body)",alignItems:"center"}}>
+          <span style={{color:C.primary,fontWeight:700}}>${fmtNum(tot30)}/mo</span>
+          {h.commute != null && <span style={{color:"#0d6efd",fontWeight:600}}>🚗{h.commute}m</span>}
+        </div>
+        <div style={{display:"flex",gap:6,marginTop:4,alignItems:"center",flexWrap:"wrap"}}>
+          <RatingBar label="M" value={mR} color="#e83e8c" />
+          <RatingBar label="P" value={pR} color={C.primary} />
+          {tR != null && <span style={{fontSize:10,fontWeight:700,color:C.text,background:C.inputBg,padding:"0px 5px",borderRadius:4}}>{"Σ"+tR+((mR==null||pR==null)?"*":"")}</span>}
+          {onMap && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:9,fontFamily:"var(--body)",padding:"1px 0"}}>📍</button>}
         </div>
       </div>
       {ex && <div style={{borderTop:"1px solid "+C.cardBorder,padding:"14px 16px",background:C.inputBg}} onClick={function(e){e.stopPropagation()}}>
@@ -948,7 +967,7 @@ function Dashboard(props) {
 
         <div style={{fontSize:12,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>Showing {filtered.length} of {homes.length}</div>
 
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
           {filtered.map(function(h) {
             var isExpanded = exId===h.id;
             return <div key={h.id} style={isExpanded?{gridColumn:"1/-1"}:{}}>
