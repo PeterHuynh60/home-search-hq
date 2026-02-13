@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/home-search-hq/static/js/main.318aebee.js",
+    "main.js": "/home-search-hq/static/js/main.1c8bec94.js",
     "index.html": "/home-search-hq/index.html",
-    "main.318aebee.js.map": "/home-search-hq/static/js/main.318aebee.js.map"
+    "main.1c8bec94.js.map": "/home-search-hq/static/js/main.1c8bec94.js.map"
   },
   "entrypoints": [
-    "static/js/main.318aebee.js"
+    "static/js/main.1c8bec94.js"
   ]
 }
