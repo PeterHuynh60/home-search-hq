@@ -10,7 +10,7 @@ var STATUSES = ["Excellent","Good","Hmm...","Meh","Out","Waiting"];
 var ST_COLORS = { Excellent:"#0d6efd","Good":"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545",Waiting:"#17a2b8" };
 
 function autoStatus(home) {
-  if (home.sold || home.pending) return "Out";
+  if (home.sold || home.pending || home.tooExpensive) return "Out";
   var mR = home.michelleRating, pR = home.peterRating;
   if (mR == null || pR == null) return "Waiting";
   var total = mR + pR;
@@ -666,6 +666,7 @@ function HomeCard(props) {
                 <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
                 {h.sold && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
                 {h.pending && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
+                {h.tooExpensive && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>TOO EXPENSIVE</span>}
                 {h.tourStatus && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:C.inputBg,color:C.textMuted,fontFamily:"var(--body)"}}>{h.tourStatus}</span>}
               </div>
               <div style={{fontSize:12,color:C.textMuted,marginTop:2,fontFamily:"var(--body)"}}>{h.city}{h.neighborhood ? " · " + h.neighborhood : ""} · {h.style}</div>
@@ -711,18 +712,21 @@ function HomeCard(props) {
             {canEdit && <ES label="Parking" value={h.parking} options={P_OPTS} onChange={function(v){u(h.id,"parking",v)}} />}
             {canEdit && <div style={{gridColumn:"span 1"}}>
               <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>MARKET STATUS</label>
-              <div style={{display:"flex",gap:12,alignItems:"center",marginTop:4}}>
+              <div style={{display:"flex",gap:12,alignItems:"center",marginTop:4,flexWrap:"wrap"}}>
                 <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:12,fontFamily:"var(--body)",color:h.sold?"#dc3545":C.text}}>
-                  <input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked)u(h.id,"pending",false)}} /> Sold
+                  <input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked){u(h.id,"pending",false);u(h.id,"tooExpensive",false)}}} /> Sold
                 </label>
                 <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:12,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}>
-                  <input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked)u(h.id,"sold",false)}} /> Pending
+                  <input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"tooExpensive",false)}}} /> Pending
+                </label>
+                <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:12,fontFamily:"var(--body)",color:h.tooExpensive?"#6f42c1":C.text}}>
+                  <input type="checkbox" checked={!!h.tooExpensive} onChange={function(e){u(h.id,"tooExpensive",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false)}}} /> Too Expensive
                 </label>
               </div>
             </div>}
             {canEdit && <div style={{gridColumn:"span 1"}}>
               <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>AUTO RATING</label>
-              <div style={{fontSize:13,fontWeight:700,color:sc,fontFamily:"var(--body)",marginTop:4}}>{computedStatus}{(h.sold?" (SOLD)":h.pending?" (PENDING)":"")}</div>
+              <div style={{fontSize:13,fontWeight:700,color:sc,fontFamily:"var(--body)",marginTop:4}}>{computedStatus}{(h.sold?" (SOLD)":h.pending?" (PENDING)":h.tooExpensive?" (TOO EXPENSIVE)":"")}</div>
             </div>}
             {canEdit && <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />}
             {canEdit && <EF label="Tour Status" value={h.tourStatus||""} onChange={function(v){u(h.id,"tourStatus",v)}} />}
