@@ -561,8 +561,8 @@ function HomeCard(props) {
     <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,overflow:"hidden",boxShadow:"0 1px 4px #0001"}}>
       <div style={{height:4,background:sc}} />
       <div style={{display:"flex"}}>
-        {h.photoUrl && <div style={{width:ex?250:120,flexShrink:0,background:C.inputBg,transition:"width 0.3s ease",alignSelf:"stretch",position:"relative",minHeight:ex?200:100,overflow:"hidden"}}>
-          <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
+        {h.photoUrl && <div style={{width:ex?"40%":"120px",minWidth:ex?300:120,flexShrink:0,background:C.inputBg,transition:"all 0.3s ease",alignSelf:"stretch",position:"relative",minHeight:ex?200:100,overflow:"hidden"}}>
+          <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
         </div>}
         <div style={{padding:"14px 18px",flex:1,minWidth:0}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
