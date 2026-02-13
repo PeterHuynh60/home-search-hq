@@ -182,7 +182,7 @@ function MortgageBar(props) {
   );
 }
 
-/* ─── Filter Panel ─── */
+/* ─── Filter Panel (legacy - for mobile fallback) ─── */
 function FilterPanel(props) {
   var f = props.filters;
   function set(k,v) { var nf = Object.assign({}, f); nf[k] = v; props.onChange(nf); }
@@ -205,6 +205,30 @@ function FilterPanel(props) {
         <button onClick={clearAll} style={{fontSize:11,fontFamily:"var(--body)",color:C.textMuted,background:"none",border:"1px solid "+C.cardBorder,borderRadius:6,padding:"4px 12px",cursor:"pointer"}}>Clear All</button>
       </div>
     </Panel>
+  );
+}
+
+/* ─── Sidebar Filters (sticky) ─── */
+function SidebarFilters(props) {
+  var f = props.filters;
+  function set(k,v) { var nf = Object.assign({}, f); nf[k] = v; props.onChange(nf); }
+  function clearAll() { props.onChange({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[]}); }
+  var activeCount = 0;
+  var keys = ["status","style","kitchen","bed","bath","parking"];
+  for (var i = 0; i < keys.length; i++) { if (f[keys[i]].length) activeCount += f[keys[i]].length; }
+  return (
+    <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,padding:"14px 14px 10px",fontFamily:"var(--body)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <span style={{fontSize:13,fontWeight:700,fontFamily:"var(--head)",color:C.text}}>Filters</span>
+        {activeCount > 0 && <button onClick={clearAll} style={{fontSize:10,fontFamily:"var(--body)",color:"#dc3545",background:"none",border:"1px solid #dc354533",borderRadius:5,padding:"2px 8px",cursor:"pointer"}}>Clear ({activeCount})</button>}
+      </div>
+      <ChkGroup label="STATUS" options={STATUSES} selected={f.status} onChange={function(v){set("status",v)}} />
+      <ChkGroup label="STYLE" options={S_OPTS} selected={f.style} onChange={function(v){set("style",v)}} />
+      <ChkGroup label="KITCHEN" options={K_OPTS} selected={f.kitchen} onChange={function(v){set("kitchen",v)}} />
+      <ChkGroup label="BEDROOMS" options={BED_OPTS} selected={f.bed} onChange={function(v){set("bed",v)}} />
+      <ChkGroup label="BATHROOMS" options={BATH_OPTS} selected={f.bath} onChange={function(v){set("bath",v)}} />
+      <ChkGroup label="PARKING" options={P_OPTS} selected={f.parking} onChange={function(v){set("parking",v)}} />
+    </div>
   );
 }
 
@@ -234,6 +258,7 @@ function MapPanel(props) {
   var homes = props.homes;
   var gmapsKey = props.gmapsKey;
   var onSelectHome = props.onSelectHome;
+  var focusRef = props.focusRef;
   var _s = useState(false); var open = _s[0]; var setOpen = _s[1];
   var _ready = useState(false); var ready = _ready[0]; var setReady = _ready[1];
   var mapRef = React.useRef(null);
@@ -251,6 +276,51 @@ function MapPanel(props) {
     };
     return function() { delete window._hshqSelect; };
   }, [onSelectHome]);
+
+  // Expose focus function via ref
+  useEffect(function() {
+    if (focusRef) {
+      focusRef.current = function(home) {
+        setOpen(true);
+        // Wait for map to init, then center on the home
+        setTimeout(function() {
+          var fullAddr = home.address + ", " + (home.city || "Denver") + ", CO";
+          var cached = geocacheRef.current[fullAddr];
+          if (cached && mapInstance.current) {
+            mapInstance.current.setCenter(cached);
+            mapInstance.current.setZoom(15);
+            // Open info window
+            var gm = window.google.maps;
+            if (infoRef.current) {
+              var sc = ST_COLORS[home.status] || "#6c757d";
+              var photoHtml = home.photoUrl ? '<img src="' + home.photoUrl + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:6px;display:block" onerror="this.style.display=\'none\'" />' : '';
+              var content = '<div style="font-family:Muli,sans-serif;color:#212529;max-width:240px;min-width:180px">' +
+                photoHtml +
+                '<strong style="font-size:13px;color:#55c278">' + home.address + '</strong><br>' +
+                '<span style="font-size:12px;color:#6c757d">' + home.city + (home.neighborhood ? " · " + home.neighborhood : "") + '</span><br>' +
+                '<span style="font-size:13px;font-weight:700;color:#55c278">$' + home.price.toLocaleString() + '</span>' +
+                '<span style="font-size:11px;color:#888"> · ' + home.sqft + ' sqft</span>' +
+                '</div>';
+              infoRef.current.setContent(content);
+              infoRef.current.setPosition(cached);
+              infoRef.current.open(mapInstance.current);
+            }
+          } else if (mapInstance.current && window.google) {
+            // Geocode if not cached yet
+            var geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ address: fullAddr }, function(results, status) {
+              if (status === "OK" && results[0]) {
+                var pos = results[0].geometry.location;
+                geocacheRef.current[fullAddr] = pos;
+                mapInstance.current.setCenter(pos);
+                mapInstance.current.setZoom(15);
+              }
+            });
+          }
+        }, 500);
+      };
+    }
+  });
 
   useEffect(function() {
     if (!open || !gmapsKey) return;
@@ -550,7 +620,7 @@ function ManualModal(props) {
 
 /* ─── Home Card ─── */
 function HomeCard(props) {
-  var h = props.home, u = props.onUpdate, del = props.onDelete, ex = props.expanded, tog = props.onToggle, cfg = props.cfg, canEdit = props.canEdit;
+  var h = props.home, u = props.onUpdate, del = props.onDelete, ex = props.expanded, tog = props.onToggle, cfg = props.cfg, canEdit = props.canEdit, onMap = props.onShowOnMap;
   var dp = h.downPayment != null ? h.downPayment : calcDown(h.price, cfg);
   var ln = h.price - dp;
   var m30 = calcPmt(cfg.rate30, cfg.term30, ln);
@@ -606,7 +676,10 @@ function HomeCard(props) {
             {h.commute != null && <span style={{fontSize:11,fontWeight:600,color:"#0d6efd",fontFamily:"var(--body)",background:"#0d6efd11",padding:"1px 7px",borderRadius:5,marginLeft:"auto"}}>{"🚗 " + h.commute + " min"}</span>}
             {h.notes && <span style={{fontSize:12,color:C.textMuted,fontStyle:"italic"}}>{h.notes}</span>}
           </div>
-          <button onClick={function(){tog(h.id)}} style={{background:"none",border:"none",color:C.textMuted,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",marginTop:8,padding:"4px 0"}}>{ex ? "▲ COLLAPSE" : canEdit ? "▼ EDIT / DETAILS" : "▼ DETAILS"}</button>
+          <div style={{display:"flex",gap:12,marginTop:8}}>
+            <button onClick={function(){tog(h.id)}} style={{background:"none",border:"none",color:C.textMuted,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",padding:"4px 0"}}>{ex ? "▲ COLLAPSE" : canEdit ? "▼ EDIT / DETAILS" : "▼ DETAILS"}</button>
+            {onMap && <button onClick={function(){onMap(h)}} style={{background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:11,fontFamily:"var(--body)",padding:"4px 0"}}>📍 SHOW ON MAP</button>}
+          </div>
           {ex && <div style={{marginTop:12,padding:14,background:C.inputBg,borderRadius:10,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
             {canEdit ? <EF label="Address" value={h.address} onChange={function(v){u(h.id,"address",v)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>ADDRESS</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.address}</div></div>}
             {canEdit ? <EF label="City" value={h.city} onChange={function(v){u(h.id,"city",v)}} /> : <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>CITY</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.city}</div></div>}
@@ -725,6 +798,8 @@ function Dashboard(props) {
   var _fi = useState({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[]});
   var filters = _fi[0]; var setFilters = _fi[1];
   var _showLogin = useState(false); var showLogin = _showLogin[0]; var setShowLogin = _showLogin[1];
+  var mapFocusRef = React.useRef(null);
+  var mapPanelRef = React.useRef(null);
 
   useEffect(function() {
     var unsub = onSnapshot(collection(db, "homes"), function(snap) {
@@ -775,7 +850,7 @@ function Dashboard(props) {
       <div className="hshq-scale">
       {/* Green Header Banner */}
       <div style={{background:C.primary,padding:"24px 20px 20px",marginBottom:0}}>
-        <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",gap:12}}>
+        <div style={{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:40,height:40,borderRadius:10,background:"rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏠</div>
           <div style={{flex:1}}>
             <h1 style={{margin:0,fontSize:30,fontWeight:700,letterSpacing:"-0.01em",color:"#fff",fontFamily:"var(--head)"}}>Home Search HQ</h1>
@@ -788,7 +863,7 @@ function Dashboard(props) {
         </div>
       </div>
 
-      <div style={{maxWidth:1100,margin:"0 auto",padding:"20px 20px 28px"}}>
+      <div style={{maxWidth:1400,margin:"0 auto",padding:"20px 20px 28px"}}>
 
         <MortgageBar cfg={cfg} onChange={setCfg} />
 
@@ -806,16 +881,27 @@ function Dashboard(props) {
           </div>
         </div>
 
-        <FilterPanel filters={filters} onChange={setFilters} />
-        <MapPanel homes={filtered} gmapsKey={GMAPS_CLIENT_KEY} onSelectHome={function(id){
+        <div ref={mapPanelRef}>
+        <MapPanel homes={filtered} gmapsKey={GMAPS_CLIENT_KEY} focusRef={mapFocusRef} onSelectHome={function(id){
           setExId(id);
           setTimeout(function(){
             var el = document.getElementById("home-card-" + id);
             if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
           }, 100);
         }} />
+        </div>
 
-        <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
+        {/* Sidebar + Main Content */}
+        <div style={{display:"flex",gap:18,alignItems:"flex-start"}}>
+
+          {/* Sticky Sidebar Filters */}
+          <div style={{width:220,flexShrink:0,position:"sticky",top:20,maxHeight:"calc(100vh - 40px)",overflowY:"auto"}}>
+            <SidebarFilters filters={filters} onChange={setFilters} />
+          </div>
+
+          {/* Main Content */}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
           <input type="text" placeholder="Search address, city, notes..." value={search} onChange={function(e){setSearch(e.target.value)}}
             style={{flex:"1 1 180px",background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none",minWidth:160}} />
           <select value={sortBy} onChange={function(e){setSortBy(e.target.value)}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:12,fontFamily:"var(--body)",outline:"none",cursor:"pointer"}}>
@@ -836,7 +922,12 @@ function Dashboard(props) {
 
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {filtered.map(function(h) {
-            return <HomeCard key={h.id} home={h} onUpdate={upd} onDelete={del} expanded={exId===h.id} onToggle={function(id){setExId(function(p){return p===id?null:id})}} cfg={cfg} canEdit={canEdit} />;
+            return <HomeCard key={h.id} home={h} onUpdate={upd} onDelete={del} expanded={exId===h.id} onToggle={function(id){setExId(function(p){return p===id?null:id})}} cfg={cfg} canEdit={canEdit} onShowOnMap={function(home){
+              if (mapPanelRef.current) mapPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              setTimeout(function(){
+                if (mapFocusRef.current) mapFocusRef.current(home);
+              }, 300);
+            }} />;
           })}
         </div>
 
@@ -844,6 +935,8 @@ function Dashboard(props) {
           <div style={{fontSize:40,marginBottom:12}}>🔍</div>
           <div style={{fontSize:14,fontFamily:"var(--body)"}}>No homes match your filters</div>
         </div>}
+          </div>{/* end main content */}
+        </div>{/* end sidebar+main flex */}
       </div>
       </div>{/* end hshq-scale */}
       {modal === "url" && <UrlModal onAdd={add} onClose={function(){setModal(null)}} cfg={cfg} />}
