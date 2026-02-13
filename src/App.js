@@ -6,8 +6,20 @@ import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebas
 var WORK_ADDRESS = "1635 Aurora Ct, Aurora, CO 80045";
 var WORK_COORDS = { lat: 39.7392, lng: -104.8374 };
 var DEFAULT_CFG = { rate15:4.6, rate30:5.75, term15:15, term30:30, minDown:95000, downPct:20, insPct:0.5, taxPct:0.55 };
-var STATUSES = ["Good","Hmm...","Meh","Out","No Thoughts","Waiting"];
-var ST_COLORS = { Good:"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545","No Thoughts":"#6c757d",Waiting:"#17a2b8" };
+var STATUSES = ["Excellent","Good","Hmm...","Meh","Out","Waiting"];
+var ST_COLORS = { Excellent:"#0d6efd","Good":"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545",Waiting:"#17a2b8" };
+
+function autoStatus(home) {
+  if (home.sold || home.pending) return "Out";
+  var mR = home.michelleRating, pR = home.peterRating;
+  if (mR == null || pR == null) return "Waiting";
+  var total = mR + pR;
+  if (total >= 14) return "Excellent";
+  if (total >= 12) return "Good";
+  if (total >= 10) return "Hmm...";
+  if (total >= 8) return "Meh";
+  return "Out";
+}
 var K_OPTS = ["Open","Closed","Halfway"];
 var S_OPTS = ["House","Townhouse","Condo"];
 var P_OPTS = ["None","Reserved (1)","Reserved (2)","Garage (1)","Garage (2)"];
@@ -292,7 +304,7 @@ function MapPanel(props) {
             // Open info window
             var gm = window.google.maps;
             if (infoRef.current) {
-              var sc = ST_COLORS[home.status] || "#6c757d";
+              var sc = ST_COLORS[autoStatus(home)] || "#6c757d";
               var photoHtml = home.photoUrl ? '<img src="' + home.photoUrl + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:6px;display:block" onerror="this.style.display=\'none\'" />' : '';
               var content = '<div style="font-family:Muli,sans-serif;color:#212529;max-width:240px;min-width:180px">' +
                 photoHtml +
@@ -386,7 +398,7 @@ function MapPanel(props) {
       var cached = geocacheRef.current[fullAddr];
 
       function placeMarker(pos) {
-        var sc = ST_COLORS[h.status] || "#6c757d";
+        var sc = ST_COLORS[autoStatus(h)] || "#6c757d";
         var priceLabel = "$" + Math.round(h.price / 1000) + "k";
 
         // Create custom bubble marker using OverlayView
@@ -415,12 +427,12 @@ function MapPanel(props) {
           div.style.border = "2px solid #fff";
           div.style.textAlign = "center";
           div.style.lineHeight = "1.2";
-          div.style.zIndex = this.home.status === "Good" ? "100" : this.home.status === "Out" ? "1" : "50";
+          div.style.zIndex = autoStatus(this.home) === "Excellent" || autoStatus(this.home) === "Good" ? "100" : autoStatus(this.home) === "Out" ? "1" : "50";
           div.style.transition = "transform 0.15s ease";
           div.textContent = this.label;
           var self = this;
           div.addEventListener("mouseover", function() { div.style.transform = "scale(1.15)"; div.style.zIndex = "200"; });
-          div.addEventListener("mouseout", function() { div.style.transform = "scale(1)"; div.style.zIndex = self.home.status === "Good" ? "100" : self.home.status === "Out" ? "1" : "50"; });
+          div.addEventListener("mouseout", function() { div.style.transform = "scale(1)"; div.style.zIndex = autoStatus(self.home) === "Excellent" || autoStatus(self.home) === "Good" ? "100" : autoStatus(self.home) === "Out" ? "1" : "50"; });
           div.addEventListener("click", function() {
             var hh = self.home;
             var photoHtml = hh.photoUrl ? '<img src="' + hh.photoUrl + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:6px;display:block" onerror="this.style.display=\'none\'" />' : '';
@@ -432,7 +444,7 @@ function MapPanel(props) {
               '<span style="font-size:11px;color:#888"> · ' + hh.sqft + ' sqft</span><br>' +
               '<span style="font-size:11px;color:#888">' + hh.bed + ' bed · ' + hh.bath + ' bath · ' + hh.style + '</span>' +
               (hh.commute != null ? '<br><span style="font-size:11px;color:#0d6efd">🚗 ' + hh.commute + ' min</span>' : '') +
-              '<br><span style="display:inline-block;margin-top:4px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:' + self.color + '22;color:' + self.color + '">' + hh.status + '</span>' +
+              '<br><span style="display:inline-block;margin-top:4px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:' + self.color + '22;color:' + self.color + '">' + autoStatus(hh) + '</span>' +
               '</div>';
             infoRef.current.setContent(content);
             infoRef.current.setPosition(self.position);
@@ -631,7 +643,8 @@ function HomeCard(props) {
   var tot15 = m15 + (h.hoa || 0) + ins + tax;
   var mR = h.michelleRating, pR = h.peterRating;
   var tR = (mR != null || pR != null) ? (mR || 0) + (pR || 0) : null;
-  var sc = ST_COLORS[h.status] || ST_COLORS.Waiting;
+  var computedStatus = autoStatus(h);
+  var sc = ST_COLORS[computedStatus] || ST_COLORS.Waiting;
   var ppsf = h.sqft ? (h.price / h.sqft).toFixed(0) : "—";
 
   var addrContent = h.link
@@ -650,7 +663,9 @@ function HomeCard(props) {
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <h3 style={{margin:0,fontSize:16,fontFamily:"var(--head)",fontWeight:700,color:C.text}}>{addrContent}</h3>
-                <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{h.status}</span>
+                <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
+                {h.sold && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
+                {h.pending && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
                 {h.tourStatus && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:C.inputBg,color:C.textMuted,fontFamily:"var(--body)"}}>{h.tourStatus}</span>}
               </div>
               <div style={{fontSize:12,color:C.textMuted,marginTop:2,fontFamily:"var(--body)"}}>{h.city}{h.neighborhood ? " · " + h.neighborhood : ""} · {h.style}</div>
@@ -694,7 +709,21 @@ function HomeCard(props) {
             {canEdit && <ES label="Kitchen" value={h.kitchen} options={K_OPTS} onChange={function(v){u(h.id,"kitchen",v)}} />}
             {canEdit && <ES label="Style" value={h.style} options={S_OPTS} onChange={function(v){u(h.id,"style",v)}} />}
             {canEdit && <ES label="Parking" value={h.parking} options={P_OPTS} onChange={function(v){u(h.id,"parking",v)}} />}
-            {canEdit && <ES label="Status" value={h.status} options={STATUSES} onChange={function(v){u(h.id,"status",v)}} />}
+            {canEdit && <div style={{gridColumn:"span 1"}}>
+              <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>MARKET STATUS</label>
+              <div style={{display:"flex",gap:12,alignItems:"center",marginTop:4}}>
+                <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:12,fontFamily:"var(--body)",color:h.sold?"#dc3545":C.text}}>
+                  <input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked)u(h.id,"pending",false)}} /> Sold
+                </label>
+                <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:12,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}>
+                  <input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked)u(h.id,"sold",false)}} /> Pending
+                </label>
+              </div>
+            </div>}
+            {canEdit && <div style={{gridColumn:"span 1"}}>
+              <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>AUTO RATING</label>
+              <div style={{fontSize:13,fontWeight:700,color:sc,fontFamily:"var(--body)",marginTop:4}}>{computedStatus}{(h.sold?" (SOLD)":h.pending?" (PENDING)":"")}</div>
+            </div>}
             {canEdit && <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />}
             {canEdit && <EF label="Tour Status" value={h.tourStatus||""} onChange={function(v){u(h.id,"tourStatus",v)}} />}
             {canEdit && <EF label="Michelle (/10)" value={h.michelleRating!=null?h.michelleRating:""} type="number" onChange={function(v){u(h.id,"michelleRating",v===""?null:parseFloat(v))}} />}
@@ -792,7 +821,7 @@ function Dashboard(props) {
   var _ex = useState(null); var exId = _ex[0]; var setExId = _ex[1];
   var _m = useState(null); var modal = _m[0]; var setModal = _m[1];
   var _so = useState("price"); var sortBy = _so[0]; var setSortBy = _so[1];
-  var _cd = useState("asc"); var comDir = _cd[0]; var setComDir = _cd[1];
+  var _cd = useState("asc"); var sortDir = _cd[0]; var setSortDir = _cd[1];
   var _sr = useState(""); var search = _sr[0]; var setSearch = _sr[1];
   var _cfg = useState(DEFAULT_CFG); var cfg = _cfg[0]; var setCfg = _cfg[1];
   var _fi = useState({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[]});
@@ -813,7 +842,7 @@ function Dashboard(props) {
 
   function upd(id, field, val) { var update = {}; update[field] = val; updateDoc(doc(db, "homes", id), update); }
   function del(id) { deleteDoc(doc(db, "homes", id)); }
-  function add(h) { addDoc(collection(db, "homes"), h); }
+  function add(h) { h.addedAt = new Date().toISOString(); addDoc(collection(db, "homes"), h); }
   function doSignOut() { signOut(auth); }
 
   function matchBed(h, sel) { if(!sel.length) return true; for(var i=0;i<sel.length;i++){if(sel[i]==="4+"&&h.bed>=4)return true;if(h.bed===parseFloat(sel[i]))return true} return false; }
@@ -821,26 +850,25 @@ function Dashboard(props) {
 
   var filtered = useMemo(function() {
     var list = homes.slice();
-    if (filters.status.length) list = list.filter(function(h){return filters.status.indexOf(h.status)>=0});
+    if (filters.status.length) list = list.filter(function(h){return filters.status.indexOf(autoStatus(h))>=0});
     if (filters.style.length) list = list.filter(function(h){return filters.style.indexOf(h.style)>=0});
     if (filters.kitchen.length) list = list.filter(function(h){return filters.kitchen.indexOf(h.kitchen)>=0});
     if (filters.parking.length) list = list.filter(function(h){return filters.parking.indexOf(h.parking)>=0});
     if (filters.bed.length) list = list.filter(function(h){return matchBed(h,filters.bed)});
     if (filters.bath.length) list = list.filter(function(h){return matchBath(h,filters.bath)});
     if (search) { var t = search.toLowerCase(); list = list.filter(function(h){return h.address.toLowerCase().indexOf(t)>=0||h.city.toLowerCase().indexOf(t)>=0||(h.neighborhood||"").toLowerCase().indexOf(t)>=0||(h.notes||"").toLowerCase().indexOf(t)>=0}); }
-    if (sortBy === "price") list.sort(function(a,b){return a.price-b.price});
-    else if (sortBy === "price-desc") list.sort(function(a,b){return b.price-a.price});
-    else if (sortBy === "sqft") list.sort(function(a,b){return b.sqft-a.sqft});
-    else if (sortBy === "rating") list.sort(function(a,b){ function r(h){var x=[];if(h.michelleRating!=null)x.push(h.michelleRating);if(h.peterRating!=null)x.push(h.peterRating);var s=0;for(var i=0;i<x.length;i++)s+=x[i];return x.length?s:-1} return r(b)-r(a) });
-    else if (sortBy === "monthly") list.sort(function(a,b){ function t(h){var d=h.downPayment!=null?h.downPayment:calcDown(h.price,cfg);return calcPmt(cfg.rate30,cfg.term30,h.price-d)+(h.hoa||0)+(cfg.insPct/100)*h.price/12+(cfg.taxPct/100)*h.price/12} return t(a)-t(b) });
-    else if (sortBy === "added") list.sort(function(a,b){return (b.added||"").localeCompare(a.added||"")});
-    else if (sortBy === "commute") { if(comDir==="asc") list.sort(function(a,b){return (a.commute||999)-(b.commute||999)}); else list.sort(function(a,b){return (b.commute||-1)-(a.commute||-1)}); }
+    if (sortBy === "price") { list.sort(function(a,b){return sortDir==="asc"?a.price-b.price:b.price-a.price}); }
+    else if (sortBy === "sqft") { list.sort(function(a,b){return sortDir==="asc"?a.sqft-b.sqft:b.sqft-a.sqft}); }
+    else if (sortBy === "rating") { list.sort(function(a,b){ function r(h){var x=[];if(h.michelleRating!=null)x.push(h.michelleRating);if(h.peterRating!=null)x.push(h.peterRating);var s=0;for(var i=0;i<x.length;i++)s+=x[i];return x.length?s:-1} return sortDir==="asc"?r(a)-r(b):r(b)-r(a) }); }
+    else if (sortBy === "monthly") { list.sort(function(a,b){ function t(h){var d=h.downPayment!=null?h.downPayment:calcDown(h.price,cfg);return calcPmt(cfg.rate30,cfg.term30,h.price-d)+(h.hoa||0)+(cfg.insPct/100)*h.price/12+(cfg.taxPct/100)*h.price/12} return sortDir==="asc"?t(a)-t(b):t(b)-t(a) }); }
+    else if (sortBy === "added") { list.sort(function(a,b){ var ta = a.addedAt||a.added||""; var tb = b.addedAt||b.added||""; return sortDir==="asc"?ta.localeCompare(tb):tb.localeCompare(ta) }); }
+    else if (sortBy === "commute") { if(sortDir==="asc") list.sort(function(a,b){return (a.commute||999)-(b.commute||999)}); else list.sort(function(a,b){return (b.commute||-1)-(a.commute||-1)}); }
     return list;
-  }, [homes, filters, search, sortBy, cfg, comDir]);
+  }, [homes, filters, search, sortBy, cfg, sortDir]);
 
-  var activeCount = homes.filter(function(h){return h.status!=="Out"}).length;
+  var activeCount = homes.filter(function(h){return autoStatus(h)!=="Out"}).length;
   var touredCount = homes.filter(function(h){return h.tourStatus && h.tourStatus.indexOf("Toured")>=0}).length;
-  var activeHomes = homes.filter(function(h){return h.status!=="Out"});
+  var activeHomes = homes.filter(function(h){return autoStatus(h)!=="Out"});
   var avgPrice = activeHomes.length ? activeHomes.reduce(function(s,h){return s+h.price},0)/activeHomes.length : 0;
 
   return (
@@ -904,16 +932,22 @@ function Dashboard(props) {
             <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
           <input type="text" placeholder="Search address, city, notes..." value={search} onChange={function(e){setSearch(e.target.value)}}
             style={{flex:"1 1 180px",background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none",minWidth:160}} />
-          <select value={sortBy} onChange={function(e){setSortBy(e.target.value)}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:12,fontFamily:"var(--body)",outline:"none",cursor:"pointer"}}>
-            <option value="price">Price ↑</option>
-            <option value="price-desc">Price ↓</option>
-            <option value="sqft">Sq Ft ↓</option>
-            <option value="rating">Rating ↓</option>
-            <option value="monthly">Monthly ↑</option>
+          <select value={sortBy} onChange={function(e){var v=e.target.value;setSortBy(v);setSortDir(v==="rating"||v==="added"||v==="sqft"?"desc":"asc")}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:12,fontFamily:"var(--body)",outline:"none",cursor:"pointer"}}>
+            <option value="price">Price</option>
+            <option value="sqft">Sq Ft</option>
+            <option value="rating">Rating</option>
+            <option value="monthly">Monthly</option>
             <option value="added">Recent</option>
             <option value="commute">Commute</option>
           </select>
-          {sortBy === "commute" && <button onClick={function(){setComDir(function(d){return d==="asc"?"desc":"asc"})}} style={{background:C.card,color:"#0d6efd",border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>{comDir==="asc"?"↑ Nearest":"↓ Farthest"}</button>}
+          <button onClick={function(){setSortDir(function(d){return d==="asc"?"desc":"asc"})}} style={{background:C.card,color:"#0d6efd",border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>{
+            sortBy==="price" ? (sortDir==="asc"?"↑ Cheapest":"↓ Priciest") :
+            sortBy==="sqft" ? (sortDir==="asc"?"↑ Smallest":"↓ Largest") :
+            sortBy==="rating" ? (sortDir==="asc"?"↑ Worst":"↓ Best") :
+            sortBy==="monthly" ? (sortDir==="asc"?"↑ Cheapest":"↓ Priciest") :
+            sortBy==="added" ? (sortDir==="asc"?"↑ Oldest":"↓ Newest") :
+            sortBy==="commute" ? (sortDir==="asc"?"↑ Nearest":"↓ Farthest") : ""
+          }</button>
           {canEdit && <button onClick={function(){setModal("url")}} style={{background:C.primary,color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:700,whiteSpace:"nowrap"}}>🔗 PASTE LINK</button>}
           {canEdit && <button onClick={function(){setModal("manual")}} style={{background:C.card,color:C.text,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>+ MANUAL</button>}
         </div>
