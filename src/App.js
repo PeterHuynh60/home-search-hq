@@ -6,8 +6,20 @@ import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebas
 var WORK_ADDRESS = "1635 Aurora Ct, Aurora, CO 80045";
 var WORK_COORDS = { lat: 39.7392, lng: -104.8374 };
 var DEFAULT_CFG = { rate15:4.6, rate30:5.75, term15:15, term30:30, minDown:95000, downPct:20, insPct:0.5, taxPct:0.55 };
-var STATUSES = ["Good","Hmm...","Meh","Out","No Thoughts","Waiting"];
-var ST_COLORS = { Good:"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545","No Thoughts":"#6c757d",Waiting:"#17a2b8" };
+var STATUSES = ["Excellent","Good","Hmm...","Meh","Out","Waiting"];
+var ST_COLORS = { Excellent:"#0d6efd","Good":"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545",Waiting:"#17a2b8" };
+
+function autoStatus(home) {
+  if (home.sold || home.pending || home.tooExpensive) return "Out";
+  var mR = home.michelleRating, pR = home.peterRating;
+  if (mR == null || pR == null) return "Waiting";
+  var total = mR + pR;
+  if (total >= 14) return "Excellent";
+  if (total >= 12) return "Good";
+  if (total >= 10) return "Hmm...";
+  if (total >= 8) return "Meh";
+  return "Out";
+}
 var K_OPTS = ["Open","Closed","Halfway"];
 var S_OPTS = ["House","Townhouse","Condo"];
 var P_OPTS = ["None","Reserved (1)","Reserved (2)","Garage (1)","Garage (2)"];
@@ -16,20 +28,21 @@ var BATH_OPTS = ["1","1.5","2","2.5","3+"];
 var GMAPS_CLIENT_KEY = "AIzaSyCxX5eVLsbZfPzRlOqKUz5HlS_M8OStBJ8"; // Paste your Google Maps JS API key here
 var AUTH_EMAIL = "home@search.hq";
 
-/* ─── Color Palette (matches huynh.place) ─── */
+/* ─── Color Palette (matches huynh.place / bet.huynh.place) ─── */
 var C = {
   primary: "#55c278",
   primaryDark: "#48a869",
   primaryLight: "#77CE93",
-  bg: "#f4f9f6",
+  primaryBg: "#e8f5ee",
+  bg: "#f0f7f3",
   card: "#ffffff",
-  cardBorder: "#dee2e6",
+  cardBorder: "#c8e6d3",
   text: "#212529",
   textMuted: "#6c757d",
   textLight: "#888",
   heading: "#55c278",
-  inputBg: "#f8f9fa",
-  inputBorder: "#ced4da"
+  inputBg: "#f8faf9",
+  inputBorder: "#b8d8c5"
 };
 
 function calcPmt(ratePct, years, principal) {
@@ -58,9 +71,11 @@ async function doExtractListing(url) {
   }
 }
 
-async function doFetchCommute(addr, city) {
+async function doFetchCommute(addr, city, departureTime) {
   try {
-    var result = await getCommuteFn({ address: addr, city: city });
+    var params = { address: addr, city: city };
+    if (departureTime) params.departureTime = departureTime;
+    var result = await getCommuteFn(params);
     return result.data.commute;
   } catch (e) {
     console.error("Commute fail:", e);
@@ -153,35 +168,73 @@ function Panel(props) {
   );
 }
 
+/* ─── Mortgage Field (stable - defined outside) ─── */
+function MortgageField(props) {
+  var inputRef = React.useRef(null);
+  var _val = useState(props.value); var val = _val[0]; var setVal = _val[1];
+  var timerRef = React.useRef(null);
+
+  // Sync from parent only when not focused
+  useEffect(function() {
+    if (inputRef.current !== document.activeElement) {
+      setVal(props.value);
+    }
+  }, [props.value]);
+
+  function handleChange(e) {
+    var v = e.target.value;
+    setVal(v);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(function() {
+      props.onCommit(parseFloat(v) || 0);
+    }, 600);
+  }
+
+  function handleBlur() {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    props.onCommit(parseFloat(val) || 0);
+  }
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:3}}>
+      <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600}}>{props.label}</label>
+      <div style={{display:"flex",alignItems:"center",gap:4}}>
+        <input ref={inputRef} type="number" step={props.step||"0.01"} value={val} onChange={handleChange} onBlur={handleBlur}
+          style={{width:80,background:C.inputBg,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none"}} />
+        {props.suffix && <span style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>{props.suffix}</span>}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Mortgage Parameters ─── */
 function MortgageBar(props) {
   var cfg = props.cfg;
   var onChange = props.onChange;
-  function MF(mfProps) {
-    return (
-      <div style={{display:"flex",flexDirection:"column",gap:3}}>
-        <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600}}>{mfProps.label}</label>
-        <div style={{display:"flex",alignItems:"center",gap:4}}>
-          <input type="number" step={mfProps.step||"0.01"} value={cfg[mfProps.field]} onChange={function(e){var o=Object.assign({},cfg);o[mfProps.field]=parseFloat(e.target.value)||0;onChange(o)}}
-            style={{width:80,background:C.inputBg,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"5px 8px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none"}} />
-          {mfProps.suffix && <span style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>{mfProps.suffix}</span>}
-        </div>
-      </div>
-    );
+
+  function commit(field, val) {
+    var o = Object.assign({}, cfg);
+    o[field] = val;
+    onChange(o);
   }
+
   return (
     <Panel title="Mortgage Parameters" subtitle={"15yr: " + cfg.rate15 + "% · 30yr: " + cfg.rate30 + "%"}>
       <div style={{display:"flex",gap:20,flexWrap:"wrap"}}>
-        <MF label="15-YR RATE" field="rate15" suffix="%" /><MF label="30-YR RATE" field="rate30" suffix="%" />
-        <MF label="15-YR TERM" field="term15" suffix="yrs" step="1" /><MF label="30-YR TERM" field="term30" suffix="yrs" step="1" />
-        <MF label="MIN DOWN" field="minDown" suffix="$" step="1000" /><MF label="DOWN %" field="downPct" suffix="%" step="1" />
-        <MF label="INS %" field="insPct" suffix="% ann" /><MF label="TAX %" field="taxPct" suffix="% ann" />
+        <MortgageField label="15-YR RATE" value={cfg.rate15} suffix="%" onCommit={function(v){commit("rate15",v)}} />
+        <MortgageField label="30-YR RATE" value={cfg.rate30} suffix="%" onCommit={function(v){commit("rate30",v)}} />
+        <MortgageField label="15-YR TERM" value={cfg.term15} suffix="yrs" step="1" onCommit={function(v){commit("term15",v)}} />
+        <MortgageField label="30-YR TERM" value={cfg.term30} suffix="yrs" step="1" onCommit={function(v){commit("term30",v)}} />
+        <MortgageField label="MIN DOWN" value={cfg.minDown} suffix="$" step="1000" onCommit={function(v){commit("minDown",v)}} />
+        <MortgageField label="DOWN %" value={cfg.downPct} suffix="%" step="1" onCommit={function(v){commit("downPct",v)}} />
+        <MortgageField label="INS %" value={cfg.insPct} suffix="% ann" onCommit={function(v){commit("insPct",v)}} />
+        <MortgageField label="TAX %" value={cfg.taxPct} suffix="% ann" onCommit={function(v){commit("taxPct",v)}} />
       </div>
     </Panel>
   );
 }
 
-/* ─── Filter Panel ─── */
+/* ─── Filter Panel (legacy - for mobile fallback) ─── */
 function FilterPanel(props) {
   var f = props.filters;
   function set(k,v) { var nf = Object.assign({}, f); nf[k] = v; props.onChange(nf); }
@@ -204,6 +257,30 @@ function FilterPanel(props) {
         <button onClick={clearAll} style={{fontSize:11,fontFamily:"var(--body)",color:C.textMuted,background:"none",border:"1px solid "+C.cardBorder,borderRadius:6,padding:"4px 12px",cursor:"pointer"}}>Clear All</button>
       </div>
     </Panel>
+  );
+}
+
+/* ─── Sidebar Filters (sticky) ─── */
+function SidebarFilters(props) {
+  var f = props.filters;
+  function set(k,v) { var nf = Object.assign({}, f); nf[k] = v; props.onChange(nf); }
+  function clearAll() { props.onChange({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[]}); }
+  var activeCount = 0;
+  var keys = ["status","style","kitchen","bed","bath","parking"];
+  for (var i = 0; i < keys.length; i++) { if (f[keys[i]].length) activeCount += f[keys[i]].length; }
+  return (
+    <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,padding:"14px 14px 10px",fontFamily:"var(--body)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <span style={{fontSize:13,fontWeight:700,fontFamily:"var(--head)",color:C.text}}>Filters</span>
+        {activeCount > 0 && <button onClick={clearAll} style={{fontSize:10,fontFamily:"var(--body)",color:"#dc3545",background:"none",border:"1px solid #dc354533",borderRadius:5,padding:"2px 8px",cursor:"pointer"}}>Clear ({activeCount})</button>}
+      </div>
+      <ChkGroup label="STATUS" options={STATUSES} selected={f.status} onChange={function(v){set("status",v)}} />
+      <ChkGroup label="STYLE" options={S_OPTS} selected={f.style} onChange={function(v){set("style",v)}} />
+      <ChkGroup label="KITCHEN" options={K_OPTS} selected={f.kitchen} onChange={function(v){set("kitchen",v)}} />
+      <ChkGroup label="BEDROOMS" options={BED_OPTS} selected={f.bed} onChange={function(v){set("bed",v)}} />
+      <ChkGroup label="BATHROOMS" options={BATH_OPTS} selected={f.bath} onChange={function(v){set("bath",v)}} />
+      <ChkGroup label="PARKING" options={P_OPTS} selected={f.parking} onChange={function(v){set("parking",v)}} />
+    </div>
   );
 }
 
@@ -232,6 +309,8 @@ function loadGmapsScript(key, cb) {
 function MapPanel(props) {
   var homes = props.homes;
   var gmapsKey = props.gmapsKey;
+  var onSelectHome = props.onSelectHome;
+  var focusRef = props.focusRef;
   var _s = useState(false); var open = _s[0]; var setOpen = _s[1];
   var _ready = useState(false); var ready = _ready[0]; var setReady = _ready[1];
   var mapRef = React.useRef(null);
@@ -241,11 +320,78 @@ function MapPanel(props) {
   var infoRef = React.useRef(null);
   var geocacheRef = React.useRef({});
   var workMarkerRef = React.useRef(null);
+  var hasFitRef = React.useRef(false);
+  var homesRef = React.useRef(homes);
+  var prevHomesLen = React.useRef(0);
+  homesRef.current = homes;
+
+  // Wire up global click handler for info window address links
+  useEffect(function() {
+    window._hshqSelect = function(id) {
+      if (onSelectHome) onSelectHome(id);
+    };
+    return function() { delete window._hshqSelect; };
+  }, [onSelectHome]);
+
+  // Expose focus function via ref
+  useEffect(function() {
+    if (focusRef) {
+      focusRef.current = function(home) {
+        setOpen(true);
+        // Wait for map to init, then center on the home
+        setTimeout(function() {
+          var fullAddr = home.address + ", " + (home.city || "Denver") + ", CO";
+          var cached = geocacheRef.current[fullAddr];
+          if (cached && mapInstance.current) {
+            mapInstance.current.setCenter(cached);
+            mapInstance.current.setZoom(15);
+            // Open info window
+            var gm = window.google.maps;
+            if (infoRef.current) {
+              var sc = ST_COLORS[autoStatus(home)] || "#6c757d";
+              var photoHtml = home.photoUrl ? '<img src="' + home.photoUrl + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:6px;display:block" onerror="this.style.display=\'none\'" />' : '';
+              var content = '<div style="font-family:Muli,sans-serif;color:#212529;max-width:240px;min-width:180px">' +
+                photoHtml +
+                '<strong style="font-size:13px;color:#55c278">' + home.address + '</strong><br>' +
+                '<span style="font-size:12px;color:#6c757d">' + home.city + (home.neighborhood ? " · " + home.neighborhood : "") + '</span><br>' +
+                '<span style="font-size:13px;font-weight:700;color:#55c278">$' + home.price.toLocaleString() + '</span>' +
+                '<span style="font-size:11px;color:#888"> · ' + home.sqft + ' sqft</span>' +
+                '</div>';
+              infoRef.current.setContent(content);
+              infoRef.current.setPosition(cached);
+              infoRef.current.open(mapInstance.current);
+            }
+          } else if (mapInstance.current && window.google) {
+            // Geocode if not cached yet
+            var geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ address: fullAddr }, function(results, status) {
+              if (status === "OK" && results[0]) {
+                var pos = results[0].geometry.location;
+                geocacheRef.current[fullAddr] = pos;
+                mapInstance.current.setCenter(pos);
+                mapInstance.current.setZoom(15);
+              }
+            });
+          }
+        }, 500);
+      };
+    }
+  });
 
   useEffect(function() {
     if (!open || !gmapsKey) return;
     loadGmapsScript(gmapsKey, function() { setReady(true); });
   }, [open, gmapsKey]);
+
+  // Reset map when panel closes
+  useEffect(function() {
+    if (!open) {
+      mapInstance.current = null;
+      markersRef.current = [];
+      routesRef.current = [];
+      hasFitRef.current = false;
+    }
+  }, [open]);
 
   useEffect(function() {
     if (!ready || !open || !mapRef.current) return;
@@ -283,7 +429,7 @@ function MapPanel(props) {
     if (!ready || !open || !mapInstance.current) return;
     var gm = window.google.maps;
     var map = mapInstance.current;
-    for (var i = 0; i < markersRef.current.length; i++) markersRef.current[i].setMap(null);
+    for (var i = 0; i < markersRef.current.length; i++) markersRef.current[i].remove();
     markersRef.current = [];
     for (var j = 0; j < routesRef.current.length; j++) routesRef.current[j].setMap(null);
     routesRef.current = [];
@@ -292,46 +438,86 @@ function MapPanel(props) {
     var bounds = new gm.LatLngBounds();
     bounds.extend(WORK_COORDS);
 
-    homes.forEach(function(h) {
+    homesRef.current.forEach(function(h) {
       var fullAddr = h.address + ", " + (h.city || "Denver") + ", CO";
       var cached = geocacheRef.current[fullAddr];
 
       function placeMarker(pos) {
-        var sc = ST_COLORS[h.status] || "#6c757d";
+        var sc = ST_COLORS[autoStatus(h)] || "#6c757d";
         var priceLabel = "$" + Math.round(h.price / 1000) + "k";
-        var marker = new gm.Marker({
-          position: pos,
-          map: map,
-          label: { text: priceLabel, color: "#fff", fontSize: "10px", fontWeight: "700" },
-          icon: {
-            path: "M-14,-8 L14,-8 L14,8 L-14,8 Z",
-            fillColor: sc,
-            fillOpacity: 0.9,
-            strokeColor: "#fff",
-            strokeWeight: 1,
-            scale: 1,
-            labelOrigin: new gm.Point(0, 0)
-          },
-          title: h.address,
-          zIndex: h.status === "Good" ? 100 : h.status === "Out" ? 1 : 50
-        });
-        markersRef.current.push(marker);
-        bounds.extend(pos);
-        map.fitBounds(bounds, 40);
 
-        marker.addListener("click", function() {
-          var content = '<div style="font-family:Muli,sans-serif;color:#212529;max-width:220px">' +
-            '<strong style="font-size:13px">' + h.address + '</strong><br>' +
-            '<span style="font-size:12px;color:#6c757d">' + h.city + (h.neighborhood ? " · " + h.neighborhood : "") + '</span><br>' +
-            '<span style="font-size:13px;font-weight:700;color:#55c278">$' + h.price.toLocaleString() + '</span>' +
-            '<span style="font-size:11px;color:#888"> · ' + h.sqft + ' sqft</span><br>' +
-            '<span style="font-size:11px;color:#888">' + h.bed + ' bed · ' + h.bath + ' bath · ' + h.style + '</span>' +
-            (h.commute != null ? '<br><span style="font-size:11px;color:#0d6efd">🚗 ' + h.commute + ' min</span>' : '') +
-            '<br><span style="display:inline-block;margin-top:4px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:' + sc + '22;color:' + sc + '">' + h.status + '</span>' +
-            '</div>';
-          infoRef.current.setContent(content);
-          infoRef.current.open(map, marker);
-        });
+        // Create custom bubble marker using OverlayView
+        function BubbleMarker(position, map, label, color, home) {
+          this.position = position;
+          this.label = label;
+          this.color = color;
+          this.home = home;
+          this.div = null;
+          this.setMap(map);
+        }
+        BubbleMarker.prototype = new gm.OverlayView();
+        BubbleMarker.prototype.onAdd = function() {
+          var div = document.createElement("div");
+          div.style.position = "absolute";
+          div.style.background = this.color;
+          div.style.color = "#fff";
+          div.style.padding = "4px 10px";
+          div.style.borderRadius = "20px";
+          div.style.fontSize = "11px";
+          div.style.fontWeight = "700";
+          div.style.fontFamily = "Muli, sans-serif";
+          div.style.whiteSpace = "nowrap";
+          div.style.cursor = "pointer";
+          div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.3)";
+          div.style.border = "2px solid #fff";
+          div.style.textAlign = "center";
+          div.style.lineHeight = "1.2";
+          div.style.zIndex = autoStatus(this.home) === "Excellent" || autoStatus(this.home) === "Good" ? "100" : autoStatus(this.home) === "Out" ? "1" : "50";
+          div.style.transition = "transform 0.15s ease";
+          div.textContent = this.label;
+          var self = this;
+          div.addEventListener("mouseover", function() { div.style.transform = "scale(1.15)"; div.style.zIndex = "200"; });
+          div.addEventListener("mouseout", function() { div.style.transform = "scale(1)"; div.style.zIndex = autoStatus(self.home) === "Excellent" || autoStatus(self.home) === "Good" ? "100" : autoStatus(self.home) === "Out" ? "1" : "50"; });
+          div.addEventListener("click", function() {
+            var hh = self.home;
+            var photoHtml = hh.photoUrl ? '<img src="' + hh.photoUrl + '" style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:6px;display:block" onerror="this.style.display=\'none\'" />' : '';
+            var content = '<div style="font-family:Muli,sans-serif;color:#212529;max-width:240px;min-width:180px">' +
+              photoHtml +
+              '<a href="#" onclick="window._hshqSelect(\'' + hh.id + '\');return false;" style="font-size:13px;font-weight:700;color:#55c278;text-decoration:none;cursor:pointer;display:block;margin-bottom:2px">' + hh.address + '</a>' +
+              '<span style="font-size:12px;color:#6c757d">' + hh.city + (hh.neighborhood ? " · " + hh.neighborhood : "") + '</span><br>' +
+              '<span style="font-size:13px;font-weight:700;color:#55c278">$' + hh.price.toLocaleString() + '</span>' +
+              '<span style="font-size:11px;color:#888"> · ' + hh.sqft + ' sqft</span><br>' +
+              '<span style="font-size:11px;color:#888">' + hh.bed + ' bed · ' + hh.bath + ' bath · ' + hh.style + '</span>' +
+              (hh.commute != null ? '<br><span style="font-size:11px;color:#0d6efd">🚗 ' + hh.commute + ' min</span>' : '') +
+              '<br><span style="display:inline-block;margin-top:4px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:' + self.color + '22;color:' + self.color + '">' + autoStatus(hh) + '</span>' +
+              '</div>';
+            infoRef.current.setContent(content);
+            infoRef.current.setPosition(self.position);
+            infoRef.current.open(map);
+          });
+          this.div = div;
+          var panes = this.getPanes();
+          panes.overlayMouseTarget.appendChild(div);
+        };
+        BubbleMarker.prototype.draw = function() {
+          var proj = this.getProjection();
+          var point = proj.fromLatLngToDivPixel(this.position);
+          if (this.div) {
+            this.div.style.left = (point.x - this.div.offsetWidth / 2) + "px";
+            this.div.style.top = (point.y - this.div.offsetHeight / 2) + "px";
+          }
+        };
+        BubbleMarker.prototype.onRemove = function() {
+          if (this.div) { this.div.parentNode.removeChild(this.div); this.div = null; }
+        };
+        BubbleMarker.prototype.remove = function() { this.setMap(null); };
+
+        var bubble = new BubbleMarker(pos, map, priceLabel, sc, h);
+        markersRef.current.push(bubble);
+        bounds.extend(pos);
+        if (!hasFitRef.current) {
+          map.fitBounds(bounds, 40);
+        }
 
         directionsService.route({
           origin: pos,
@@ -359,7 +545,8 @@ function MapPanel(props) {
         });
       }
     });
-  }, [ready, open, homes]);
+    hasFitRef.current = true;
+  }, [ready, open]);
 
   if (!gmapsKey) return null;
 
@@ -491,9 +678,10 @@ function ManualModal(props) {
   );
 }
 
-/* ─── Home Card ─── */
+
+/* ─── Home Card (Compact Box) ─── */
 function HomeCard(props) {
-  var h = props.home, u = props.onUpdate, del = props.onDelete, ex = props.expanded, tog = props.onToggle, cfg = props.cfg;
+  var h = props.home, u = props.onUpdate, del = props.onDelete, ex = props.expanded, tog = props.onToggle, cfg = props.cfg, canEdit = props.canEdit, onMap = props.onShowOnMap;
   var dp = h.downPayment != null ? h.downPayment : calcDown(h.price, cfg);
   var ln = h.price - dp;
   var m30 = calcPmt(cfg.rate30, cfg.term30, ln);
@@ -504,7 +692,8 @@ function HomeCard(props) {
   var tot15 = m15 + (h.hoa || 0) + ins + tax;
   var mR = h.michelleRating, pR = h.peterRating;
   var tR = (mR != null || pR != null) ? (mR || 0) + (pR || 0) : null;
-  var sc = ST_COLORS[h.status] || ST_COLORS.Waiting;
+  var computedStatus = autoStatus(h);
+  var sc = ST_COLORS[computedStatus] || ST_COLORS.Waiting;
   var ppsf = h.sqft ? (h.price / h.sqft).toFixed(0) : "—";
 
   var addrContent = h.link
@@ -512,88 +701,101 @@ function HomeCard(props) {
     : h.address;
 
   return (
-    <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,overflow:"hidden",boxShadow:"0 1px 4px #0001"}}>
-      <div style={{height:4,background:sc}} />
-      <div style={{display:"flex"}}>
-        {h.photoUrl && <div style={{width:120,minHeight:100,flexShrink:0,overflow:"hidden",background:C.inputBg}}>
-          <img src={h.photoUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
+    <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+(ex?C.primary+"66":C.cardBorder),overflow:"hidden",boxShadow:ex?"0 2px 12px #55c27822":"0 1px 4px #0001",transition:"all 0.2s ease",cursor:"pointer",height:"100%",display:"flex",flexDirection:"column",maxWidth:"100%"}} onClick={function(e){if(e.target.tagName!=="INPUT"&&e.target.tagName!=="SELECT"&&e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&!e.target.closest("button")&&!e.target.closest("a")&&!e.target.closest("label"))tog(h.id)}}>
+      <div style={{height:3,background:sc}} />
+      {/* Photo left + info right */}
+      <div style={{display:"flex",flex:1}}>
+        {h.photoUrl && <div style={{width:ex?280:90,flexShrink:0,background:C.inputBg,alignSelf:"stretch",position:"relative",minHeight:80,overflow:"hidden",transition:"width 0.3s ease"}}>
+          <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
         </div>}
-        <div style={{padding:"14px 18px",flex:1,minWidth:0}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                <h3 style={{margin:0,fontSize:16,fontFamily:"var(--head)",fontWeight:700,color:C.text}}>{addrContent}</h3>
-                <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{h.status}</span>
-                {h.tourStatus && <span style={{fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:6,background:C.inputBg,color:C.textMuted,fontFamily:"var(--body)"}}>{h.tourStatus}</span>}
-              </div>
-              <div style={{fontSize:12,color:C.textMuted,marginTop:2,fontFamily:"var(--body)"}}>{h.city}{h.neighborhood ? " · " + h.neighborhood : ""} · {h.style}</div>
-            </div>
-            <div style={{textAlign:"right",minWidth:110,flexShrink:0}}>
-              <div style={{fontSize:20,fontWeight:800,color:C.primary,fontFamily:"var(--head)"}}>${h.price.toLocaleString()}</div>
-              <div style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>${ppsf}/sqft · {h.sqft.toLocaleString()}</div>
-            </div>
+        <div style={{padding:"8px 10px",flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap",marginBottom:2}}>
+            <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
+            {h.sold && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
+            {h.pending && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
+            {h.tooExpensive && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
           </div>
-          <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:8,fontSize:12,fontFamily:"var(--body)"}}>
-            <span style={{color:C.textMuted}}>Bed <strong style={{color:C.text}}>{h.bed}</strong></span>
-            <span style={{color:C.textMuted}}>Bath <strong style={{color:C.text}}>{h.bath}</strong></span>
-            <span style={{color:C.textMuted}}>Kitchen <strong style={{color:C.text}}>{h.kitchen}</strong></span>
-            <span style={{color:C.textMuted}}>Parking <strong style={{color:C.text}}>{h.parking}</strong></span>
-            <span style={{color:C.textMuted}}>HOA <strong style={{color:h.hoa>400?"#dc3545":C.text}}>{h.hoa>0?"$"+h.hoa:"—"}</strong></span>
-            <span style={{color:C.textMuted}}>15yr <strong style={{color:C.text}}>${fmtNum(tot15)}</strong></span>
-            <span style={{color:C.textMuted}}>30yr <strong style={{color:C.primary}}>${fmtNum(tot30)}</strong></span>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <h3 style={{margin:"0 0 1px",fontSize:11,fontFamily:"var(--head)",fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{addrContent}</h3>
+          <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.city}{h.neighborhood ? " · "+h.neighborhood : ""}</div>
+          <div style={{fontSize:15,fontWeight:800,color:C.primary,fontFamily:"var(--head)",lineHeight:1}}>${h.price.toLocaleString()}</div>
+          <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.sqft.toLocaleString()}sf · {h.bed}bd/{h.bath}ba · ${fmtNum(tot30)}/mo</div>
+          <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
             <RatingBar label="M" value={mR} color="#e83e8c" />
             <RatingBar label="P" value={pR} color={C.primary} />
-            {tR != null && <span style={{fontSize:13,fontWeight:700,color:C.text,fontFamily:"var(--body)",background:C.inputBg,padding:"1px 8px",borderRadius:7}}>{"Σ " + tR + ((mR==null||pR==null)?"*":"")}</span>}
-            {h.commute != null && <span style={{fontSize:11,fontWeight:600,color:"#0d6efd",fontFamily:"var(--body)",background:"#0d6efd11",padding:"1px 7px",borderRadius:5,marginLeft:"auto"}}>{"🚗 " + h.commute + " min"}</span>}
-            {h.notes && <span style={{fontSize:12,color:C.textMuted,fontStyle:"italic"}}>{h.notes}</span>}
+            {tR != null && <span style={{fontSize:9,fontWeight:700,color:C.text,background:C.inputBg,padding:"0px 4px",borderRadius:4}}>{"Σ"+tR+((mR==null||pR==null)?"*":"")}</span>}
+            {h.commute != null && <span style={{fontSize:9,color:"#0d6efd",fontWeight:600}}>🚗{h.commute}m</span>}
+            {onMap && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:9,fontFamily:"var(--body)",padding:"1px 0"}}>📍</button>}
           </div>
-          <button onClick={function(){tog(h.id)}} style={{background:"none",border:"none",color:C.textMuted,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",marginTop:8,padding:"4px 0"}}>{ex ? "▲ COLLAPSE" : "▼ EDIT / DETAILS"}</button>
-          {ex && <div style={{marginTop:12,padding:14,background:C.inputBg,borderRadius:10,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
-            <EF label="Address" value={h.address} onChange={function(v){u(h.id,"address",v)}} />
-            <EF label="City" value={h.city} onChange={function(v){u(h.id,"city",v)}} />
-            <EF label="Neighborhood" value={h.neighborhood} onChange={function(v){u(h.id,"neighborhood",v)}} />
-            <EF label="Price" value={h.price} type="number" onChange={function(v){u(h.id,"price",parseFloat(v)||0)}} />
-            <EF label="Sq Ft" value={h.sqft} type="number" onChange={function(v){u(h.id,"sqft",parseFloat(v)||0)}} />
-            <EF label="Down Pmt" value={dp} type="number" onChange={function(v){u(h.id,"downPayment",parseFloat(v)||0)}} />
-            <EF label="HOA" value={h.hoa} type="number" onChange={function(v){u(h.id,"hoa",parseFloat(v)||0)}} />
-            <EF label="Commute" value={h.commute||""} type="number" onChange={function(v){u(h.id,"commute",v?parseFloat(v):null)}} />
-            <EF label="Beds" value={h.bed} type="number" onChange={function(v){u(h.id,"bed",parseFloat(v)||0)}} />
-            <EF label="Baths" value={h.bath} type="number" onChange={function(v){u(h.id,"bath",parseFloat(v)||0)}} />
-            <ES label="Kitchen" value={h.kitchen} options={K_OPTS} onChange={function(v){u(h.id,"kitchen",v)}} />
-            <ES label="Style" value={h.style} options={S_OPTS} onChange={function(v){u(h.id,"style",v)}} />
-            <ES label="Parking" value={h.parking} options={P_OPTS} onChange={function(v){u(h.id,"parking",v)}} />
-            <ES label="Status" value={h.status} options={STATUSES} onChange={function(v){u(h.id,"status",v)}} />
-            <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />
-            <EF label="Tour Status" value={h.tourStatus||""} onChange={function(v){u(h.id,"tourStatus",v)}} />
-            <EF label="Michelle (/10)" value={h.michelleRating!=null?h.michelleRating:""} type="number" onChange={function(v){u(h.id,"michelleRating",v===""?null:parseFloat(v))}} />
-            <EF label="Peter (/10)" value={h.peterRating!=null?h.peterRating:""} type="number" onChange={function(v){u(h.id,"peterRating",v===""?null:parseFloat(v))}} />
-            <EF label="Photo URL" value={h.photoUrl||""} onChange={function(v){u(h.id,"photoUrl",v)}} />
-            <EF label="Notes" value={h.notes||""} onChange={function(v){u(h.id,"notes",v)}} />
-            <div style={{gridColumn:"1/-1",borderTop:"1px solid "+C.cardBorder,paddingTop:10,marginTop:4}}>
-              <div style={{display:"flex",gap:18,flexWrap:"wrap",fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>
-                <span>15yr: <strong style={{color:C.text}}>${fmtNum(m15)}/mo</strong></span>
-                <span>30yr: <strong style={{color:C.primary}}>${fmtNum(m30)}/mo</strong></span>
-                <span>Ins: <strong style={{color:C.text}}>${fmtNum(ins)}/mo</strong></span>
-                <span>Tax: <strong style={{color:C.text}}>${fmtNum(tax)}/mo</strong></span>
-                <span>15yr Total: <strong style={{color:"#e83e8c"}}>${fmtNum(tot15)}/mo</strong></span>
-                <span>30yr Total: <strong style={{color:"#e83e8c"}}>${fmtNum(tot30)}/mo</strong></span>
-                <span>Loan: <strong style={{color:C.text}}>${ln.toLocaleString()}</strong></span>
-              </div>
-            </div>
-            <div style={{gridColumn:"1/-1",display:"flex",justifyContent:"flex-end"}}>
-              <button onClick={function(){del(h.id)}} style={{background:"#dc354511",color:"#dc3545",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
-            </div>
-          </div>}
         </div>
       </div>
+      {ex && <div className="card-expand" style={{borderTop:"1px solid "+C.cardBorder,padding:"10px 12px",background:C.inputBg,maxWidth:"100%",overflowX:"hidden"}} onClick={function(e){e.stopPropagation()}}>
+        <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>
+          <span>Kitchen <strong style={{color:C.text}}>{h.kitchen}</strong></span>
+          <span>Parking <strong style={{color:C.text}}>{h.parking}</strong></span>
+          <span>HOA <strong style={{color:h.hoa>400?"#dc3545":C.text}}>{h.hoa>0?"$"+h.hoa:"—"}</strong></span>
+          <span>15yr <strong style={{color:C.text}}>${fmtNum(tot15)}/mo</strong></span>
+          <span>30yr <strong style={{color:C.primary}}>${fmtNum(tot30)}/mo</strong></span>
+          <span>Down <strong style={{color:C.text}}>${fmtNum(dp)}</strong></span>
+          <span>Loan <strong style={{color:C.text}}>${ln.toLocaleString()}</strong></span>
+          {h.tourStatus && <span>Tour <strong style={{color:C.text}}>{h.tourStatus}</strong></span>}
+          {h.notes && <span style={{fontStyle:"italic"}}>{h.notes}</span>}
+        </div>
+        <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12,paddingBottom:12,borderBottom:"1px solid "+C.cardBorder}}>
+          <span>15yr P&I: <strong style={{color:C.text}}>${fmtNum(m15)}/mo</strong></span>
+          <span>30yr P&I: <strong style={{color:C.primary}}>${fmtNum(m30)}/mo</strong></span>
+          <span>Ins: <strong style={{color:C.text}}>${fmtNum(ins)}/mo</strong></span>
+          <span>Tax: <strong style={{color:C.text}}>${fmtNum(tax)}/mo</strong></span>
+        </div>
+        {canEdit && <div className="hshq-edit-grid">
+          <EF label="Address" value={h.address} onChange={function(v){u(h.id,"address",v)}} />
+          <EF label="City" value={h.city} onChange={function(v){u(h.id,"city",v)}} />
+          <EF label="Neighborhood" value={h.neighborhood} onChange={function(v){u(h.id,"neighborhood",v)}} />
+          <EF label="Price" value={h.price} type="number" onChange={function(v){u(h.id,"price",parseFloat(v)||0)}} />
+          <EF label="Sq Ft" value={h.sqft} type="number" onChange={function(v){u(h.id,"sqft",parseFloat(v)||0)}} />
+          <EF label="Down Pmt" value={dp} type="number" onChange={function(v){u(h.id,"downPayment",parseFloat(v)||0)}} />
+          <EF label="HOA" value={h.hoa} type="number" onChange={function(v){u(h.id,"hoa",parseFloat(v)||0)}} />
+          <EF label="Commute" value={h.commute||""} type="number" onChange={function(v){u(h.id,"commute",v?parseFloat(v):null)}} />
+          <EF label="Beds" value={h.bed} type="number" onChange={function(v){u(h.id,"bed",parseFloat(v)||0)}} />
+          <EF label="Baths" value={h.bath} type="number" onChange={function(v){u(h.id,"bath",parseFloat(v)||0)}} />
+          <ES label="Kitchen" value={h.kitchen} options={K_OPTS} onChange={function(v){u(h.id,"kitchen",v)}} />
+          <ES label="Style" value={h.style} options={S_OPTS} onChange={function(v){u(h.id,"style",v)}} />
+          <ES label="Parking" value={h.parking} options={P_OPTS} onChange={function(v){u(h.id,"parking",v)}} />
+          <div>
+            <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>MARKET STATUS</label>
+            <div style={{display:"flex",gap:10,alignItems:"center",marginTop:4,flexWrap:"wrap"}}>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.sold?"#dc3545":C.text}}><input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked){u(h.id,"pending",false);u(h.id,"tooExpensive",false)}}} /> Sold</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}><input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"tooExpensive",false)}}} /> Pending</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tooExpensive?"#6f42c1":C.text}}><input type="checkbox" checked={!!h.tooExpensive} onChange={function(e){u(h.id,"tooExpensive",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false)}}} /> $$$</label>
+            </div>
+          </div>
+          <div>
+            <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>AUTO RATING</label>
+            <div style={{fontSize:13,fontWeight:700,color:sc,fontFamily:"var(--body)",marginTop:4}}>{computedStatus}</div>
+          </div>
+          <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />
+          <EF label="Tour Status" value={h.tourStatus||""} onChange={function(v){u(h.id,"tourStatus",v)}} />
+          <EF label="Michelle (/10)" value={h.michelleRating!=null?h.michelleRating:""} type="number" onChange={function(v){u(h.id,"michelleRating",v===""?null:parseFloat(v))}} />
+          <EF label="Peter (/10)" value={h.peterRating!=null?h.peterRating:""} type="number" onChange={function(v){u(h.id,"peterRating",v===""?null:parseFloat(v))}} />
+          <EF label="Photo URL" value={h.photoUrl||""} onChange={function(v){u(h.id,"photoUrl",v)}} />
+          <EF label="Notes" value={h.notes||""} onChange={function(v){u(h.id,"notes",v)}} />
+          <div style={{gridColumn:"1/-1",display:"flex",justifyContent:"flex-end",paddingTop:8}}>
+            <button onClick={function(e){e.stopPropagation();if(window.confirm("Are you sure you want to delete this listing?\n\n"+h.address))del(h.id)}} style={{background:"#dc354511",color:"#dc3545",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
+          </div>
+        </div>}
+        {!canEdit && <div className="hshq-edit-grid">
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>ADDRESS</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.address}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>CITY</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.city}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>NEIGHBORHOOD</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.neighborhood||"—"}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>PRICE</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>${h.price.toLocaleString()}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>SQ FT</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.sqft.toLocaleString()}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>DOWN PMT</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>${fmtNum(dp)}</div></div>
+        </div>}
+      </div>}
     </div>
   );
 }
-
-/* ─── Passcode Login ─── */
-function LoginScreen(props) {
+/* ─── Edit Mode Login Modal ─── */
+function EditLoginModal(props) {
   var _p = useState(""); var pw = _p[0]; var setPw = _p[1];
   var _err = useState(""); var err = _err[0]; var setErr = _err[1];
   var _loading = useState(false); var loading = _loading[0]; var setLoading = _loading[1];
@@ -602,37 +804,88 @@ function LoginScreen(props) {
     if (!pw) return;
     setLoading(true); setErr("");
     signInWithEmailAndPassword(auth, AUTH_EMAIL, pw)
-      .then(function() { props.onAuth(true); })
+      .then(function() { props.onSuccess(); })
       .catch(function() { setErr("Incorrect passcode"); setLoading(false); });
   }
 
   return (
-    <div style={{minHeight:"100vh",background:C.primaryLight,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--body)"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}input:focus{border-color:${C.primary}!important;outline:none}`}</style>
-      <div style={{background:C.card,borderRadius:20,padding:40,width:"90%",maxWidth:380,border:"1px solid "+C.cardBorder,textAlign:"center",boxShadow:"0 8px 32px #0002"}}>
-        <div style={{width:56,height:56,borderRadius:14,background:C.primary,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 16px",color:"#fff"}}>🏠</div>
-        <h1 style={{margin:"0 0 4px",fontSize:28,fontWeight:700,color:C.text,fontFamily:"var(--head)"}}>Home Search HQ</h1>
-        <p style={{margin:"0 0 24px",fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>Enter passcode to continue</p>
+    <div style={{position:"fixed",inset:0,background:"#00000066",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,backdropFilter:"blur(4px)"}} onClick={props.onClose}>
+      <div style={{background:C.card,borderRadius:16,padding:32,width:"90%",maxWidth:360,border:"1px solid "+C.cardBorder,textAlign:"center",boxShadow:"0 8px 32px #0002"}} onClick={function(e){e.stopPropagation()}}>
+        <div style={{width:48,height:48,borderRadius:12,background:C.primary,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,margin:"0 auto 14px",color:"#fff"}}>✏️</div>
+        <h2 style={{margin:"0 0 4px",fontSize:22,fontWeight:700,color:C.text,fontFamily:"var(--head)"}}>Edit Mode</h2>
+        <p style={{margin:"0 0 18px",fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>Enter passcode to unlock editing</p>
         <input type="password" value={pw} onChange={function(e){setPw(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter")go()}} placeholder="Passcode"
-          style={{width:"100%",background:C.inputBg,border:"1px solid " + (err ? "#dc3545" : C.inputBorder),borderRadius:10,padding:"12px 16px",color:C.text,fontSize:15,fontFamily:"var(--body)",textAlign:"center",marginBottom:14,outline:"none"}} />
+          style={{width:"100%",background:C.inputBg,border:"1px solid " + (err ? "#dc3545" : C.inputBorder),borderRadius:10,padding:"12px 16px",color:C.text,fontSize:15,fontFamily:"var(--body)",textAlign:"center",marginBottom:12,outline:"none"}} />
         {err && <p style={{margin:"0 0 10px",fontSize:12,color:"#dc3545",fontFamily:"var(--body)"}}>{err}</p>}
-        <button onClick={go} disabled={loading} style={{width:"100%",background:loading?C.cardBorder:C.primary,color:"#fff",border:"none",borderRadius:10,padding:"12px",cursor:"pointer",fontSize:14,fontFamily:"var(--body)",fontWeight:700}}>{loading ? "Signing in..." : "Enter"}</button>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={props.onClose} style={{flex:1,background:C.inputBg,color:C.textMuted,border:"1px solid "+C.cardBorder,borderRadius:10,padding:"12px",cursor:"pointer",fontSize:14,fontFamily:"var(--body)",fontWeight:600}}>Cancel</button>
+          <button onClick={go} disabled={loading} style={{flex:1,background:loading?C.cardBorder:C.primary,color:"#fff",border:"none",borderRadius:10,padding:"12px",cursor:"pointer",fontSize:14,fontFamily:"var(--body)",fontWeight:700}}>{loading ? "..." : "Unlock"}</button>
+        </div>
       </div>
     </div>
   );
 }
 
 /* ─── Dashboard ─── */
-function Dashboard() {
+function Dashboard(props) {
+  var canEdit = props.canEdit;
+  var onAuth = props.onAuth;
   var _h = useState([]); var homes = _h[0]; var setHomes = _h[1];
   var _ex = useState(null); var exId = _ex[0]; var setExId = _ex[1];
   var _m = useState(null); var modal = _m[0]; var setModal = _m[1];
   var _so = useState("price"); var sortBy = _so[0]; var setSortBy = _so[1];
-  var _cd = useState("asc"); var comDir = _cd[0]; var setComDir = _cd[1];
+  var _cd = useState("asc"); var sortDir = _cd[0]; var setSortDir = _cd[1];
   var _sr = useState(""); var search = _sr[0]; var setSearch = _sr[1];
   var _cfg = useState(DEFAULT_CFG); var cfg = _cfg[0]; var setCfg = _cfg[1];
   var _fi = useState({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[]});
   var filters = _fi[0]; var setFilters = _fi[1];
+  var _showLogin = useState(false); var showLogin = _showLogin[0]; var setShowLogin = _showLogin[1];
+  var mapFocusRef = React.useRef(null);
+  var mapPanelRef = React.useRef(null);
+  var _comDay = useState("1"); var comDay = _comDay[0]; var setComDay = _comDay[1]; // 0=Sun, 1=Mon...
+  var _comTime = useState("08:00"); var comTime = _comTime[0]; var setComTime = _comTime[1];
+  var _comLoading = useState(false); var comLoading = _comLoading[0]; var setComLoading = _comLoading[1];
+  var _comProgress = useState(""); var comProgress = _comProgress[0]; var setComProgress = _comProgress[1];
+
+  function getNextDepartureTimestamp(dayOfWeek, timeStr) {
+    // dayOfWeek: 0=Sun, 1=Mon... timeStr: "08:00"
+    var parts = timeStr.split(":");
+    var hrs = parseInt(parts[0]); var mins = parseInt(parts[1]) || 0;
+    var now = new Date();
+    var target = new Date(now);
+    var diff = (parseInt(dayOfWeek) - now.getDay() + 7) % 7;
+    if (diff === 0 && (now.getHours() > hrs || (now.getHours() === hrs && now.getMinutes() >= mins))) diff = 7;
+    target.setDate(now.getDate() + diff);
+    target.setHours(hrs, mins, 0, 0);
+    return Math.floor(target.getTime() / 1000);
+  }
+
+  async function recalcAllCommutes() {
+    setComLoading(true);
+    var ts = getNextDepartureTimestamp(comDay, comTime);
+    var count = 0;
+    for (var i = 0; i < homes.length; i++) {
+      var h = homes[i];
+      setComProgress((i + 1) + "/" + homes.length + " — " + h.address);
+      try {
+        // Try with departure time first, fall back to without
+        var mins = await doFetchCommute(h.address, h.city, ts);
+        if (mins == null) {
+          mins = await doFetchCommute(h.address, h.city, null);
+        }
+        console.log(h.address, "→", mins, "min");
+        if (mins != null) {
+          await updateDoc(doc(db, "homes", h.id), { commute: mins });
+          count++;
+        }
+      } catch (err) {
+        console.error("Commute error for", h.address, err);
+      }
+    }
+    setComProgress("Done! Updated " + count + " of " + homes.length);
+    setComLoading(false);
+    setTimeout(function() { setComProgress(""); }, 3000);
+  }
 
   useEffect(function() {
     var unsub = onSnapshot(collection(db, "homes"), function(snap) {
@@ -646,7 +899,7 @@ function Dashboard() {
 
   function upd(id, field, val) { var update = {}; update[field] = val; updateDoc(doc(db, "homes", id), update); }
   function del(id) { deleteDoc(doc(db, "homes", id)); }
-  function add(h) { addDoc(collection(db, "homes"), h); }
+  function add(h) { h.addedAt = new Date().toISOString(); addDoc(collection(db, "homes"), h); }
   function doSignOut() { signOut(auth); }
 
   function matchBed(h, sel) { if(!sel.length) return true; for(var i=0;i<sel.length;i++){if(sel[i]==="4+"&&h.bed>=4)return true;if(h.bed===parseFloat(sel[i]))return true} return false; }
@@ -654,82 +907,137 @@ function Dashboard() {
 
   var filtered = useMemo(function() {
     var list = homes.slice();
-    if (filters.status.length) list = list.filter(function(h){return filters.status.indexOf(h.status)>=0});
+    if (filters.status.length) list = list.filter(function(h){return filters.status.indexOf(autoStatus(h))>=0});
     if (filters.style.length) list = list.filter(function(h){return filters.style.indexOf(h.style)>=0});
     if (filters.kitchen.length) list = list.filter(function(h){return filters.kitchen.indexOf(h.kitchen)>=0});
     if (filters.parking.length) list = list.filter(function(h){return filters.parking.indexOf(h.parking)>=0});
     if (filters.bed.length) list = list.filter(function(h){return matchBed(h,filters.bed)});
     if (filters.bath.length) list = list.filter(function(h){return matchBath(h,filters.bath)});
     if (search) { var t = search.toLowerCase(); list = list.filter(function(h){return h.address.toLowerCase().indexOf(t)>=0||h.city.toLowerCase().indexOf(t)>=0||(h.neighborhood||"").toLowerCase().indexOf(t)>=0||(h.notes||"").toLowerCase().indexOf(t)>=0}); }
-    if (sortBy === "price") list.sort(function(a,b){return a.price-b.price});
-    else if (sortBy === "price-desc") list.sort(function(a,b){return b.price-a.price});
-    else if (sortBy === "sqft") list.sort(function(a,b){return b.sqft-a.sqft});
-    else if (sortBy === "rating") list.sort(function(a,b){ function r(h){var x=[];if(h.michelleRating!=null)x.push(h.michelleRating);if(h.peterRating!=null)x.push(h.peterRating);var s=0;for(var i=0;i<x.length;i++)s+=x[i];return x.length?s:-1} return r(b)-r(a) });
-    else if (sortBy === "monthly") list.sort(function(a,b){ function t(h){var d=h.downPayment!=null?h.downPayment:calcDown(h.price,cfg);return calcPmt(cfg.rate30,cfg.term30,h.price-d)+(h.hoa||0)+(cfg.insPct/100)*h.price/12+(cfg.taxPct/100)*h.price/12} return t(a)-t(b) });
-    else if (sortBy === "added") list.sort(function(a,b){return (b.added||"").localeCompare(a.added||"")});
-    else if (sortBy === "commute") { if(comDir==="asc") list.sort(function(a,b){return (a.commute||999)-(b.commute||999)}); else list.sort(function(a,b){return (b.commute||-1)-(a.commute||-1)}); }
+    if (sortBy === "price") { list.sort(function(a,b){return sortDir==="asc"?a.price-b.price:b.price-a.price}); }
+    else if (sortBy === "sqft") { list.sort(function(a,b){return sortDir==="asc"?a.sqft-b.sqft:b.sqft-a.sqft}); }
+    else if (sortBy === "rating") { list.sort(function(a,b){ function r(h){var x=[];if(h.michelleRating!=null)x.push(h.michelleRating);if(h.peterRating!=null)x.push(h.peterRating);var s=0;for(var i=0;i<x.length;i++)s+=x[i];return x.length?s:-1} return sortDir==="asc"?r(a)-r(b):r(b)-r(a) }); }
+    else if (sortBy === "monthly") { list.sort(function(a,b){ function t(h){var d=h.downPayment!=null?h.downPayment:calcDown(h.price,cfg);return calcPmt(cfg.rate30,cfg.term30,h.price-d)+(h.hoa||0)+(cfg.insPct/100)*h.price/12+(cfg.taxPct/100)*h.price/12} return sortDir==="asc"?t(a)-t(b):t(b)-t(a) }); }
+    else if (sortBy === "added") { list.sort(function(a,b){ var ta = a.addedAt||a.added||""; var tb = b.addedAt||b.added||""; return sortDir==="asc"?ta.localeCompare(tb):tb.localeCompare(ta) }); }
+    else if (sortBy === "commute") { if(sortDir==="asc") list.sort(function(a,b){return (a.commute||999)-(b.commute||999)}); else list.sort(function(a,b){return (b.commute||-1)-(a.commute||-1)}); }
     return list;
-  }, [homes, filters, search, sortBy, cfg, comDir]);
+  }, [homes, filters, search, sortBy, cfg, sortDir]);
 
-  var activeCount = homes.filter(function(h){return h.status!=="Out"}).length;
+  var activeCount = homes.filter(function(h){return autoStatus(h)!=="Out"}).length;
   var touredCount = homes.filter(function(h){return h.tourStatus && h.tourStatus.indexOf("Toured")>=0}).length;
-  var activeHomes = homes.filter(function(h){return h.status!=="Out"});
+  var activeHomes = homes.filter(function(h){return autoStatus(h)!=="Out"});
   var avgPrice = activeHomes.length ? activeHomes.reduce(function(s,h){return s+h.price},0)/activeHomes.length : 0;
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"var(--body)",color:C.text}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.cardBorder};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}`}</style>
-      <div style={{maxWidth:960,margin:"0 auto",padding:"28px 20px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-          <div style={{width:36,height:36,borderRadius:10,background:C.primary,display:"flex",alignItems:"center",justifyContent:"center",fontSize:19,color:"#fff"}}>🏠</div>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}@media(min-width:1600px){.hshq-scale{zoom:1.25}}@media(min-width:2200px){.hshq-scale{zoom:1.4}}@keyframes slideDown{from{max-height:0;opacity:0}to{max-height:800px;opacity:1}}.card-expand{animation:slideDown 0.3s ease-out forwards;overflow:hidden}.hshq-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.hshq-edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}@media(max-width:1200px){.hshq-cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.hshq-cards{grid-template-columns:repeat(2,1fr)}.hshq-sidebar{display:none!important}.hshq-mobile-filters{display:block!important}.hshq-layout{flex-direction:column!important}.hshq-main{width:100%!important}.hshq-edit-grid{grid-template-columns:1fr 1fr}.hshq-expanded-wrap{grid-column:auto!important}}@media(max-width:600px){.hshq-cards{grid-template-columns:1fr}.hshq-edit-grid{grid-template-columns:1fr}}`}</style>
+
+      <div className="hshq-scale">
+      {/* Green Header Banner */}
+      <div style={{background:C.primary,padding:"24px 20px 20px",marginBottom:0}}>
+        <div style={{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",gap:12}}>
+          <a href="https://huynh.place" style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)",textDecoration:"none",fontWeight:600,whiteSpace:"nowrap"}}>← Main</a>
+          <div style={{width:40,height:40,borderRadius:10,background:"rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏠</div>
           <div style={{flex:1}}>
-            <h1 style={{margin:0,fontSize:30,fontWeight:700,letterSpacing:"-0.01em",color:C.primary,fontFamily:"var(--head)"}}>Home Search HQ</h1>
-            <p style={{margin:0,fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>Peter & Michelle · Denver Metro · {homes.length} properties</p>
+            <h1 style={{margin:0,fontSize:30,fontWeight:700,letterSpacing:"-0.01em",color:"#fff",fontFamily:"var(--head)"}}>Home Search HQ</h1>
+            <p style={{margin:0,fontSize:12,color:"rgba(255,255,255,0.8)",fontFamily:"var(--body)"}}>Peter & Michelle · Denver Metro · {homes.length} properties</p>
           </div>
-          <button onClick={doSignOut} style={{background:"none",border:"1px solid "+C.cardBorder,borderRadius:8,padding:"6px 14px",color:C.textMuted,cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>Sign Out</button>
+          {canEdit ? <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <span style={{fontSize:10,color:"rgba(255,255,255,0.7)",fontFamily:"var(--body)"}}>✏️ Edit Mode</span>
+            <button onClick={doSignOut} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>Lock</button>
+          </div> : <button onClick={function(){setShowLogin(true)}} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>🔓 Edit Mode</button>}
         </div>
+      </div>
+
+      <div style={{maxWidth:1400,margin:"0 auto",padding:"20px 20px 28px"}}>
 
         <MortgageBar cfg={cfg} onChange={setCfg} />
 
         <div style={{marginBottom:16}}>
-          <div style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+          <div style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:10,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
             <span style={{color:"#0d6efd"}}>📍</span> Commute to: <span style={{color:"#0d6efd"}}>{WORK_ADDRESS}</span>
+            {canEdit && <span style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+              <select value={comDay} onChange={function(e){setComDay(e.target.value)}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"4px 6px",color:C.text,fontSize:11,fontFamily:"var(--body)",outline:"none",cursor:"pointer"}}>
+                <option value="1">Mon</option><option value="2">Tue</option><option value="3">Wed</option>
+                <option value="4">Thu</option><option value="5">Fri</option><option value="6">Sat</option><option value="0">Sun</option>
+              </select>
+              <input type="time" value={comTime} onChange={function(e){setComTime(e.target.value)}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"4px 6px",color:C.text,fontSize:11,fontFamily:"var(--body)",outline:"none"}} />
+              <button onClick={recalcAllCommutes} disabled={comLoading} style={{background:comLoading?"#ccc":C.primary,color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",cursor:comLoading?"not-allowed":"pointer",fontSize:11,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>
+                {comLoading ? "⏳ Calculating..." : "🔄 Recalc Commutes"}
+              </button>
+              {comProgress && <span style={{fontSize:10,color:"#0d6efd",fontFamily:"var(--body)"}}>{comProgress}</span>}
+            </span>}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8}}>
-            {[["Total",homes.length,C.primary],["Active",activeCount,"#28a745"],["Toured",touredCount,"#6f42c1"],["Avg Price","$"+Math.round(avgPrice/1000)+"k","#e83e8c"]].map(function(item){
-              return <div key={item[0]} style={{background:C.card,borderRadius:10,padding:"14px 16px",borderLeft:"3px solid "+item[2],border:"1px solid "+C.cardBorder,borderLeftWidth:3,borderLeftColor:item[2]}}>
-                <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.06em",marginBottom:4}}>{item[0].toUpperCase()}</div>
-                <div style={{fontSize:24,fontWeight:700,color:item[2],fontFamily:"var(--head)"}}>{item[1]}</div>
+            {[["Total",homes.length],["Active",activeCount],["Toured",touredCount],["Avg Price","$"+Math.round(avgPrice/1000)+"k"]].map(function(item){
+              return <div key={item[0]} style={{background:C.primary,borderRadius:10,padding:"14px 16px"}}>
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.7)",fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.06em",marginBottom:4}}>{item[0].toUpperCase()}</div>
+                <div style={{fontSize:24,fontWeight:700,color:"#fff",fontFamily:"var(--head)"}}>{item[1]}</div>
               </div>
             })}
           </div>
         </div>
 
-        <FilterPanel filters={filters} onChange={setFilters} />
-        <MapPanel homes={filtered} gmapsKey={GMAPS_CLIENT_KEY} />
+        <div ref={mapPanelRef}>
+        <MapPanel homes={filtered} gmapsKey={GMAPS_CLIENT_KEY} focusRef={mapFocusRef} onSelectHome={function(id){
+          setExId(id);
+          setTimeout(function(){
+            var el = document.getElementById("home-card-" + id);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 100);
+        }} />
+        </div>
 
-        <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
+        {/* Sidebar + Main Content */}
+        <div className="hshq-layout" style={{display:"flex",gap:18,alignItems:"flex-start"}}>
+
+          {/* Sticky Sidebar Filters - hidden on mobile */}
+          <div className="hshq-sidebar" style={{width:220,flexShrink:0,position:"sticky",top:20,maxHeight:"calc(100vh - 40px)",overflowY:"auto"}}>
+            <SidebarFilters filters={filters} onChange={setFilters} />
+          </div>
+
+          {/* Main Content */}
+          <div className="hshq-main" style={{flex:1,minWidth:0}}>
+            {/* Mobile Filters - shown only on mobile */}
+            <div className="hshq-mobile-filters" style={{display:"none",marginBottom:12}}>
+              <FilterPanel filters={filters} onChange={setFilters} />
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
           <input type="text" placeholder="Search address, city, notes..." value={search} onChange={function(e){setSearch(e.target.value)}}
             style={{flex:"1 1 180px",background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none",minWidth:160}} />
-          <select value={sortBy} onChange={function(e){setSortBy(e.target.value)}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:12,fontFamily:"var(--body)",outline:"none",cursor:"pointer"}}>
-            <option value="price">Price ↑</option>
-            <option value="price-desc">Price ↓</option>
-            <option value="sqft">Sq Ft ↓</option>
-            <option value="rating">Rating ↓</option>
-            <option value="monthly">Monthly ↑</option>
+          <select value={sortBy} onChange={function(e){var v=e.target.value;setSortBy(v);setSortDir(v==="rating"||v==="added"||v==="sqft"?"desc":"asc")}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:12,fontFamily:"var(--body)",outline:"none",cursor:"pointer"}}>
+            <option value="price">Price</option>
+            <option value="sqft">Sq Ft</option>
+            <option value="rating">Rating</option>
+            <option value="monthly">Monthly</option>
             <option value="added">Recent</option>
             <option value="commute">Commute</option>
           </select>
-          {sortBy === "commute" && <button onClick={function(){setComDir(function(d){return d==="asc"?"desc":"asc"})}} style={{background:C.card,color:"#0d6efd",border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>{comDir==="asc"?"↑ Nearest":"↓ Farthest"}</button>}
-          <button onClick={function(){setModal("url")}} style={{background:C.primary,color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:700,whiteSpace:"nowrap"}}>🔗 PASTE LINK</button>
-          <button onClick={function(){setModal("manual")}} style={{background:C.card,color:C.text,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>+ MANUAL</button>
+          <button onClick={function(){setSortDir(function(d){return d==="asc"?"desc":"asc"})}} style={{background:C.card,color:"#0d6efd",border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>{
+            sortBy==="price" ? (sortDir==="asc"?"↑ Cheapest":"↓ Priciest") :
+            sortBy==="sqft" ? (sortDir==="asc"?"↑ Smallest":"↓ Largest") :
+            sortBy==="rating" ? (sortDir==="asc"?"↑ Worst":"↓ Best") :
+            sortBy==="monthly" ? (sortDir==="asc"?"↑ Cheapest":"↓ Priciest") :
+            sortBy==="added" ? (sortDir==="asc"?"↑ Oldest":"↓ Newest") :
+            sortBy==="commute" ? (sortDir==="asc"?"↑ Nearest":"↓ Farthest") : ""
+          }</button>
+          {canEdit && <button onClick={function(){setModal("url")}} style={{background:C.primary,color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:700,whiteSpace:"nowrap"}}>🔗 PASTE LINK</button>}
+          {canEdit && <button onClick={function(){setModal("manual")}} style={{background:C.card,color:C.text,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>+ MANUAL</button>}
         </div>
 
         <div style={{fontSize:12,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>Showing {filtered.length} of {homes.length}</div>
 
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        <div className="hshq-cards">
           {filtered.map(function(h) {
-            return <HomeCard key={h.id} home={h} onUpdate={upd} onDelete={del} expanded={exId===h.id} onToggle={function(id){setExId(function(p){return p===id?null:id})}} cfg={cfg} />;
+            var isExpanded = exId===h.id;
+            return <div key={h.id} className={isExpanded?"hshq-expanded-wrap":""} style={isExpanded?{gridColumn:"1/-1"}:{}}>
+              <HomeCard home={h} onUpdate={upd} onDelete={del} expanded={isExpanded} onToggle={function(id){setExId(function(p){return p===id?null:id})}} cfg={cfg} canEdit={canEdit} onShowOnMap={function(home){
+              if (mapPanelRef.current) mapPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              setTimeout(function(){
+                if (mapFocusRef.current) mapFocusRef.current(home);
+              }, 300);
+            }} />
+            </div>;
           })}
         </div>
 
@@ -737,9 +1045,13 @@ function Dashboard() {
           <div style={{fontSize:40,marginBottom:12}}>🔍</div>
           <div style={{fontSize:14,fontFamily:"var(--body)"}}>No homes match your filters</div>
         </div>}
+          </div>{/* end main content */}
+        </div>{/* end sidebar+main flex */}
       </div>
+      </div>{/* end hshq-scale */}
       {modal === "url" && <UrlModal onAdd={add} onClose={function(){setModal(null)}} cfg={cfg} />}
       {modal === "manual" && <ManualModal onAdd={add} onClose={function(){setModal(null)}} />}
+      {showLogin && <EditLoginModal onSuccess={function(){setShowLogin(false)}} onClose={function(){setShowLogin(false)}} />}
     </div>
   );
 }
@@ -758,6 +1070,5 @@ export default function App() {
   }, []);
 
   if (loading) return null;
-  if (!authed) return <LoginScreen onAuth={setAuthed} />;
-  return <Dashboard />;
+  return <Dashboard canEdit={authed} onAuth={setAuthed} />;
 }
