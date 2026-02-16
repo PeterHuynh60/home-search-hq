@@ -701,11 +701,19 @@ function HomeCard(props) {
     : h.address;
 
   return (
+<<<<<<< HEAD
     <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+(ex?C.primary+"66":C.cardBorder),overflow:"hidden",boxShadow:ex?"0 2px 12px #55c27822":"0 1px 4px #0001",transition:"all 0.2s ease",cursor:"pointer",height:"100%",display:"flex",flexDirection:"column"}} onClick={function(e){if(e.target.tagName!=="INPUT"&&e.target.tagName!=="SELECT"&&e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&!e.target.closest("button")&&!e.target.closest("a")&&!e.target.closest("label"))tog(h.id)}}>
       <div style={{height:3,background:sc}} />
       {/* Photo left + info right */}
       <div style={{display:"flex",flex:1}}>
         {h.photoUrl && <div style={{width:ex?280:90,flexShrink:0,background:C.inputBg,alignSelf:"stretch",position:"relative",minHeight:80,overflow:"hidden",transition:"width 0.3s ease"}}>
+=======
+    <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+(ex?C.primary+"66":C.cardBorder),overflow:"hidden",boxShadow:ex?"0 2px 12px #55c27822":"0 1px 4px #0001",transition:"all 0.2s ease",cursor:"pointer",height:"100%",display:"flex",flexDirection:"column",maxWidth:"100%"}} onClick={function(e){if(e.target.tagName!=="INPUT"&&e.target.tagName!=="SELECT"&&e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&!e.target.closest("button")&&!e.target.closest("a")&&!e.target.closest("label"))tog(h.id)}}>
+      <div style={{height:3,background:sc}} />
+      {/* Photo left + info right */}
+      <div className="hshq-card-inner" style={{display:"flex",flex:1}}>
+        {h.photoUrl && <div className="hshq-card-photo" style={{width:ex?280:90,flexShrink:0,background:C.inputBg,alignSelf:"stretch",position:"relative",minHeight:80,overflow:"hidden",transition:"width 0.3s ease"}}>
+>>>>>>> 89af266de280b6a61e14ea9601d5549fd5660b20
           <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
         </div>}
         <div style={{padding:"8px 10px",flex:1,minWidth:0}}>
@@ -728,7 +736,11 @@ function HomeCard(props) {
           </div>
         </div>
       </div>
+<<<<<<< HEAD
       {ex && <div className="card-expand" style={{borderTop:"1px solid "+C.cardBorder,padding:"14px 16px",background:C.inputBg}} onClick={function(e){e.stopPropagation()}}>
+=======
+      {ex && <div className="card-expand" style={{borderTop:"1px solid "+C.cardBorder,padding:"10px 12px",background:C.inputBg,maxWidth:"100%",overflowX:"hidden"}} onClick={function(e){e.stopPropagation()}}>
+>>>>>>> 89af266de280b6a61e14ea9601d5549fd5660b20
         <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>
           <span>Kitchen <strong style={{color:C.text}}>{h.kitchen}</strong></span>
           <span>Parking <strong style={{color:C.text}}>{h.parking}</strong></span>
@@ -746,7 +758,11 @@ function HomeCard(props) {
           <span>Ins: <strong style={{color:C.text}}>${fmtNum(ins)}/mo</strong></span>
           <span>Tax: <strong style={{color:C.text}}>${fmtNum(tax)}/mo</strong></span>
         </div>
+<<<<<<< HEAD
         {canEdit && <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+=======
+        {canEdit && <div className="hshq-edit-grid">
+>>>>>>> 89af266de280b6a61e14ea9601d5549fd5660b20
           <EF label="Address" value={h.address} onChange={function(v){u(h.id,"address",v)}} />
           <EF label="City" value={h.city} onChange={function(v){u(h.id,"city",v)}} />
           <EF label="Neighborhood" value={h.neighborhood} onChange={function(v){u(h.id,"neighborhood",v)}} />
@@ -782,7 +798,11 @@ function HomeCard(props) {
             <button onClick={function(e){e.stopPropagation();if(window.confirm("Are you sure you want to delete this listing?\n\n"+h.address))del(h.id)}} style={{background:"#dc354511",color:"#dc3545",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
           </div>
         </div>}
+<<<<<<< HEAD
         {!canEdit && <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+=======
+        {!canEdit && <div className="hshq-edit-grid">
+>>>>>>> 89af266de280b6a61e14ea9601d5549fd5660b20
           <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>ADDRESS</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.address}</div></div>
           <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>CITY</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.city}</div></div>
           <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>NEIGHBORHOOD</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.neighborhood||"—"}</div></div>
@@ -930,12 +950,20 @@ function Dashboard(props) {
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"var(--body)",color:C.text}}>
+<<<<<<< HEAD
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}@media(min-width:1600px){.hshq-scale{zoom:1.25}}@media(min-width:2200px){.hshq-scale{zoom:1.4}}@keyframes slideDown{from{max-height:0;opacity:0}to{max-height:800px;opacity:1}}.card-expand{animation:slideDown 0.3s ease-out forwards;overflow:hidden}.hshq-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}@media(max-width:1200px){.hshq-cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.hshq-cards{grid-template-columns:repeat(2,1fr)}.hshq-sidebar{display:none!important}.hshq-mobile-filters{display:block!important}.hshq-layout{flex-direction:column!important}.hshq-main{width:100%!important}}@media(max-width:600px){.hshq-cards{grid-template-columns:1fr}}`}</style>
+=======
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}@media(min-width:1600px){.hshq-scale{zoom:1.25}}@media(min-width:2200px){.hshq-scale{zoom:1.4}}@keyframes slideDown{from{max-height:0;opacity:0}to{max-height:800px;opacity:1}}.card-expand{animation:slideDown 0.3s ease-out forwards;overflow:hidden}.hshq-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.hshq-edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}@media(max-width:1200px){.hshq-cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.hshq-cards{grid-template-columns:repeat(2,1fr)}.hshq-sidebar{display:none!important}.hshq-mobile-filters{display:block!important}.hshq-layout{flex-direction:column!important}.hshq-main{width:100%!important}.hshq-edit-grid{grid-template-columns:1fr 1fr}.hshq-expanded-wrap{grid-column:auto!important}}@media(max-width:500px){.hshq-cards{grid-template-columns:repeat(2,1fr);gap:6px}.hshq-edit-grid{grid-template-columns:1fr}.hshq-expanded-wrap{grid-column:1/-1!important}.hshq-card-inner{flex-direction:column!important}.hshq-card-photo{width:100%!important;height:80px!important;min-height:80px!important}}`}</style>
+>>>>>>> 89af266de280b6a61e14ea9601d5549fd5660b20
 
       <div className="hshq-scale">
       {/* Green Header Banner */}
       <div style={{background:C.primary,padding:"24px 20px 20px",marginBottom:0}}>
         <div style={{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",gap:12}}>
+<<<<<<< HEAD
+=======
+          <a href="https://huynh.place" style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)",textDecoration:"none",fontWeight:600,whiteSpace:"nowrap"}}>← Main</a>
+>>>>>>> 89af266de280b6a61e14ea9601d5549fd5660b20
           <div style={{width:40,height:40,borderRadius:10,background:"rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏠</div>
           <div style={{flex:1}}>
             <h1 style={{margin:0,fontSize:30,fontWeight:700,letterSpacing:"-0.01em",color:"#fff",fontFamily:"var(--head)"}}>Home Search HQ</h1>
@@ -1029,7 +1057,11 @@ function Dashboard(props) {
         <div className="hshq-cards">
           {filtered.map(function(h) {
             var isExpanded = exId===h.id;
+<<<<<<< HEAD
             return <div key={h.id} style={isExpanded?{gridColumn:"1/-1"}:{}}>
+=======
+            return <div key={h.id} className={isExpanded?"hshq-expanded-wrap":""} style={isExpanded?{gridColumn:"1/-1"}:{}}>
+>>>>>>> 89af266de280b6a61e14ea9601d5549fd5660b20
               <HomeCard home={h} onUpdate={upd} onDelete={del} expanded={isExpanded} onToggle={function(id){setExId(function(p){return p===id?null:id})}} cfg={cfg} canEdit={canEdit} onShowOnMap={function(home){
               if (mapPanelRef.current) mapPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
               setTimeout(function(){
