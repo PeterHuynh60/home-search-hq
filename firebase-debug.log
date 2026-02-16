@@ -1,0 +1,184 @@
+[debug] [2026-02-13T19:07:32.704Z] ----------------------------------------------------------------------
+[debug] [2026-02-13T19:07:32.707Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Peter\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js functions:shell
+[debug] [2026-02-13T19:07:32.707Z] CLI Version:   15.6.0
+[debug] [2026-02-13T19:07:32.707Z] Platform:      win32
+[debug] [2026-02-13T19:07:32.707Z] Node Version:  v24.13.0
+[debug] [2026-02-13T19:07:32.707Z] Time:          Fri Feb 13 2026 12:07:32 GMT-0700 (Mountain Standard Time)
+[debug] [2026-02-13T19:07:32.707Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-02-13T19:07:34.271Z] Object "/functions" in "firebase.json" is missing required property: {"missingProperty":"source"}
+[debug] [2026-02-13T19:07:34.272Z] Object "/functions" in "firebase.json" is missing required property: {"missingProperty":"remoteSource"}
+[debug] [2026-02-13T19:07:34.272Z] Field "/functions" in "firebase.json" is possibly invalid: must be array
+[debug] [2026-02-13T19:07:34.272Z] Field "/functions" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2026-02-13T19:07:34.274Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-13T19:07:34.274Z] > authorizing via signed-in user (peter@huynh.place)
+[debug] [2026-02-13T19:07:34.274Z] [iam] checking project home-search-hq for permissions ["firebase.projects.get"]
+[debug] [2026-02-13T19:07:34.275Z] Checked if tokens are valid: true, expires at: 1771010805831
+[debug] [2026-02-13T19:07:34.275Z] Checked if tokens are valid: true, expires at: 1771010805831
+[debug] [2026-02-13T19:07:34.276Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/home-search-hq:testIamPermissions [none]
+[debug] [2026-02-13T19:07:34.276Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/home-search-hq:testIamPermissions  x-goog-user-project=home-search-hq
+[debug] [2026-02-13T19:07:34.276Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/home-search-hq:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-02-13T19:07:34.512Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/home-search-hq:testIamPermissions 200
+[debug] [2026-02-13T19:07:34.512Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/home-search-hq:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-02-13T19:07:34.522Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-13T19:07:34.541Z] defaultcredentials: writing to file C:\Users\Peter\AppData\Roaming\firebase\peter_huynh_place_application_default_credentials.json
+[debug] [2026-02-13T19:07:34.543Z] DEBUG: Setting GAC to C:\Users\Peter\AppData\Roaming\firebase\peter_huynh_place_application_default_credentials.json
+[debug] [2026-02-13T19:07:34.543Z] Checked if tokens are valid: true, expires at: 1771010805831
+[debug] [2026-02-13T19:07:34.543Z] Checked if tokens are valid: true, expires at: 1771010805831
+[debug] [2026-02-13T19:07:34.543Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/home-search-hq/adminSdkConfig [none]
+[debug] [2026-02-13T19:07:34.820Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/home-search-hq/adminSdkConfig 200
+[debug] [2026-02-13T19:07:34.820Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/home-search-hq/adminSdkConfig {"projectId":"home-search-hq","storageBucket":"home-search-hq.firebasestorage.app"}
+[debug] [2026-02-13T19:07:34.835Z] [functions] Watching "C:\Users\Peter\home-search-hq\functions" for Cloud Functions...
+[debug] [2026-02-13T19:07:34.838Z] Validating nodejs source
+[debug] [2026-02-13T19:07:35.786Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "24"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.4.1"
+  },
+  "private": true
+}
+[debug] [2026-02-13T19:07:35.786Z] Building nodejs source
+[debug] [2026-02-13T19:07:35.786Z] Failed to find version of module node: reached end of search path C:\Users\Peter\home-search-hq\functions\node_modules
+[info] +  functions: Using node@24 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-02-13T19:07:35.789Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-02-13T19:07:35.823Z] Found firebase-functions binary at 'C:\Users\Peter\home-search-hq\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8971
+
+[debug] [2026-02-13T19:07:37.048Z] Got response from /__/functions.yaml {"endpoints":{"extractListing":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"extractListing"},"getCommute":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"getCommute"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2026-02-13T19:07:41.086Z] [functions] Loaded functions definitions from source: extractListing, getCommute.
+[debug] [2026-02-13T19:07:41.091Z] [functions[us-central1-extractListing]] http function initialized (http://127.0.0.1:5000/home-search-hq/us-central1/extractListing).
+[debug] [2026-02-13T19:07:41.091Z] [functions[us-central1-getCommute]] http function initialized (http://127.0.0.1:5000/home-search-hq/us-central1/getCommute).
+[info] i  functions: Loaded functions: extractListing, getCommute 
+[warn] !  functions: The following emulators are not running, calls to these services will affect production: firestore, database, pubsub, storage, eventarc, tasks 
+[debug] [2026-02-13T19:09:06.470Z] >>> [apiv2][query] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ [none]
+[debug] [2026-02-13T19:09:06.470Z] >>> [apiv2][body] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ {"address":"3335 Dexter Street","city":"Denver"}
+[debug] [2026-02-13T19:09:06.490Z] [work-queue] {"queuedWork":["/home-search-hq/us-central1/getCommute/-2026-02-13T19:09:06.489Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-13T19:09:06.490Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/home-search-hq/us-central1/getCommute/-2026-02-13T19:09:06.489Z"],"workRunningCount":1}
+[debug] [2026-02-13T19:09:06.490Z] Accepted request POST /home-search-hq/us-central1/getCommute/ --> us-central1-getCommute
+[debug] [2026-02-13T19:09:06.490Z] DEBUG: [functions] Runtime ready! Sending request!
+[debug] [2026-02-13T19:09:06.491Z] DEBUG: [functions] Got req.url=/home-search-hq/us-central1/getCommute/, mapping to path=/
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-02-13T19:09:06.510Z] DEBUG: [worker-pool] addWorker(us-central1-getCommute)
+[debug] [2026-02-13T19:09:06.510Z] DEBUG: [worker-pool] Adding worker with key us-central1-getCommute, total=1
+[debug] [2026-02-13T19:09:07.794Z] DEBUG: [runtime-status] [3424] Resolved module firebase-admin {"declared":true,"installed":true,"version":"13.6.1","resolution":"C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-admin\\lib\\index.js"}
+[debug] [2026-02-13T19:09:07.795Z] DEBUG: [runtime-status] [3424] Resolved module firebase-functions {"declared":true,"installed":true,"version":"7.0.5","resolution":"C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\v2\\index.js"}
+[debug] [2026-02-13T19:09:07.796Z] DEBUG: [runtime-status] [3424] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}]
+[debug] [2026-02-13T19:09:07.797Z] DEBUG: [runtime-status] [3424] Resolved module firebase-functions {"declared":true,"installed":true,"version":"7.0.5","resolution":"C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\v2\\index.js"}
+[debug] [2026-02-13T19:09:07.797Z] DEBUG: [runtime-status] [3424] Detected firebase-functions v7+, skipping legacy stubs.
+[debug] [2026-02-13T19:09:07.797Z] DEBUG: [runtime-status] [3424] Resolved module firebase-admin {"declared":true,"installed":true,"version":"13.6.1","resolution":"C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-admin\\lib\\index.js"}
+[debug] [2026-02-13T19:09:07.903Z] DEBUG: [runtime-status] [3424] Resolved module firebase-functions {"declared":true,"installed":true,"version":"7.0.5","resolution":"C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\v2\\index.js"}
+[debug] [2026-02-13T19:09:08.326Z] DEBUG: [runtime-status] [3424] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"13.6.1","resolution":"C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-admin\\lib\\index.js"}}
+[debug] [2026-02-13T19:09:08.341Z] DEBUG: [runtime-status] [3424] Functions runtime initialized. {"cwd":"C:\\Users\\Peter\\home-search-hq\\functions","node_version":"24.13.0"}
+[debug] [2026-02-13T19:09:08.341Z] DEBUG: [runtime-status] [3424] Listening to port: \\?\pipe\fire_emu_7fe314efda974131
+[debug] [2026-02-13T19:09:08.411Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: IDLE
+[debug] [2026-02-13T19:09:08.411Z] DEBUG: [worker-pool] submitRequest(triggerId=us-central1-getCommute)
+[debug] [2026-02-13T19:09:08.411Z] [functions] Beginning execution of "us-central1-getCommute"
+[debug] [2026-02-13T19:09:08.411Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: BUSY
+[info] >  {"address":"3335 Dexter Street","city":"Denver","severity":"WARNING","message":"Request body is missing data."} {"user":{"address":"3335 Dexter Street","city":"Denver","severity":"WARNING","message":"Request body is missing data."},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-getCommute"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"address\":\"3335 Dexter Street\",\"city\":\"Denver\",\"severity\":\"WARNING\",\"message\":\"Request body is missing data.\"}"}}
+[info] >  {"severity":"ERROR","message":"Error: Invalid request, unable to process.\n    at entryFromArgs (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\logger\\index.js:120:13)\n    at Object.error (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\logger\\index.js:109:8)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\common\\providers\\https.js:420:26\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\common\\providers\\https.js:383:13\n    at cors (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:188:7)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:224:17\n    at originCallback (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:214:15)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:219:13\n    at optionsCallback (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:199:9)\n    at corsMiddleware (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:204:7)"} {"user":{"severity":"ERROR","message":"Error: Invalid request, unable to process.\n    at entryFromArgs (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\logger\\index.js:120:13)\n    at Object.error (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\logger\\index.js:109:8)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\common\\providers\\https.js:420:26\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\common\\providers\\https.js:383:13\n    at cors (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:188:7)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:224:17\n    at originCallback (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:214:15)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:219:13\n    at optionsCallback (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:199:9)\n    at corsMiddleware (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\cors\\lib\\index.js:204:7)"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-getCommute"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"ERROR\",\"message\":\"Error: Invalid request, unable to process.\\n    at entryFromArgs (C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\firebase-functions\\\\lib\\\\logger\\\\index.js:120:13)\\n    at Object.error (C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\firebase-functions\\\\lib\\\\logger\\\\index.js:109:8)\\n    at C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\firebase-functions\\\\lib\\\\common\\\\providers\\\\https.js:420:26\\n    at C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\firebase-functions\\\\lib\\\\common\\\\providers\\\\https.js:383:13\\n    at cors (C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\cors\\\\lib\\\\index.js:188:7)\\n    at C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\cors\\\\lib\\\\index.js:224:17\\n    at originCallback (C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\cors\\\\lib\\\\index.js:214:15)\\n    at C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\cors\\\\lib\\\\index.js:219:13\\n    at optionsCallback (C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\cors\\\\lib\\\\index.js:199:9)\\n    at corsMiddleware (C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\cors\\\\lib\\\\index.js:204:7)\"}"}}
+[debug] [2026-02-13T19:09:08.434Z] DEBUG: Finishing up request with event=pause
+[debug] [2026-02-13T19:09:08.434Z] [functions] Finished "us-central1-getCommute" in 22.6877ms
+[debug] [2026-02-13T19:09:08.434Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: IDLE
+[debug] [2026-02-13T19:09:08.434Z] DEBUG: Finishing up request with event=finish
+[debug] [2026-02-13T19:09:08.434Z] DEBUG: Finishing up request with event=close
+[debug] [2026-02-13T19:09:08.434Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-13T19:09:08.435Z] <<< [apiv2][status] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ 400
+[debug] [2026-02-13T19:09:08.435Z] <<< [apiv2][body] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ {"error":{"message":"Bad Request","status":"INVALID_ARGUMENT"}}
+[debug] [2026-02-13T19:09:42.122Z] >>> [apiv2][query] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ [none]
+[debug] [2026-02-13T19:09:42.122Z] >>> [apiv2][body] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ {"data":{"address":"3335 Dexter Street","city":"Denver"}}
+[debug] [2026-02-13T19:09:42.139Z] [work-queue] {"queuedWork":["/home-search-hq/us-central1/getCommute/-2026-02-13T19:09:42.139Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-13T19:09:42.139Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/home-search-hq/us-central1/getCommute/-2026-02-13T19:09:42.139Z"],"workRunningCount":1}
+[debug] [2026-02-13T19:09:42.139Z] Accepted request POST /home-search-hq/us-central1/getCommute/ --> us-central1-getCommute
+[debug] [2026-02-13T19:09:42.140Z] DEBUG: [functions] Runtime ready! Sending request!
+[debug] [2026-02-13T19:09:42.140Z] DEBUG: [functions] Got req.url=/home-search-hq/us-central1/getCommute/, mapping to path=/
+[debug] [2026-02-13T19:09:42.140Z] DEBUG: [worker-pool] submitRequest(triggerId=us-central1-getCommute)
+[debug] [2026-02-13T19:09:42.140Z] [functions] Beginning execution of "us-central1-getCommute"
+[debug] [2026-02-13T19:09:42.140Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: BUSY
+[info] >  {"verifications":{"app":"MISSING","auth":"MISSING"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"} {"user":{"verifications":{"app":"MISSING","auth":"MISSING"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-getCommute"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"verifications\":{\"app\":\"MISSING\",\"auth\":\"MISSING\"},\"logging.googleapis.com/labels\":{\"firebase-log-type\":\"callable-request-verification\"},\"severity\":\"DEBUG\",\"message\":\"Callable request verification passed\"}"}}
+[info] >  {"severity":"ERROR","message":"Unhandled error TypeError: Converting circular structure to JSON\n    --> starting at object with constructor 'Socket'\n    |     property 'parser' -> object with constructor 'HTTPParser'\n    --- property 'socket' closes the circle\n    at JSON.stringify (<anonymous>)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\index.js:148:42\n    at fixedLen (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\v2\\providers\\https.js:131:34)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\common\\providers\\https.js:513:20\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async runFunction (C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:399:9)\n    at async runHTTPS (C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:424:5)\n    at async C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:585:21"} {"user":{"severity":"ERROR","message":"Unhandled error TypeError: Converting circular structure to JSON\n    --> starting at object with constructor 'Socket'\n    |     property 'parser' -> object with constructor 'HTTPParser'\n    --- property 'socket' closes the circle\n    at JSON.stringify (<anonymous>)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\index.js:148:42\n    at fixedLen (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\v2\\providers\\https.js:131:34)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\common\\providers\\https.js:513:20\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async runFunction (C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:399:9)\n    at async runHTTPS (C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:424:5)\n    at async C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:585:21"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-getCommute"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"ERROR\",\"message\":\"Unhandled error TypeError: Converting circular structure to JSON\\n    --> starting at object with constructor 'Socket'\\n    |     property 'parser' -> object with constructor 'HTTPParser'\\n    --- property 'socket' closes the circle\\n    at JSON.stringify (<anonymous>)\\n    at C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\index.js:148:42\\n    at fixedLen (C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\firebase-functions\\\\lib\\\\v2\\\\providers\\\\https.js:131:34)\\n    at C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\firebase-functions\\\\lib\\\\common\\\\providers\\\\https.js:513:20\\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\\n    at async runFunction (C:\\\\Users\\\\Peter\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\firebase-tools\\\\lib\\\\emulator\\\\functionsEmulatorRuntime.js:399:9)\\n    at async runHTTPS (C:\\\\Users\\\\Peter\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\firebase-tools\\\\lib\\\\emulator\\\\functionsEmulatorRuntime.js:424:5)\\n    at async C:\\\\Users\\\\Peter\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\firebase-tools\\\\lib\\\\emulator\\\\functionsEmulatorRuntime.js:585:21\"}"}}
+[debug] [2026-02-13T19:09:42.143Z] DEBUG: Finishing up request with event=pause
+[debug] [2026-02-13T19:09:42.143Z] [functions] Finished "us-central1-getCommute" in 3.1831ms
+[debug] [2026-02-13T19:09:42.143Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: IDLE
+[debug] [2026-02-13T19:09:42.143Z] DEBUG: Finishing up request with event=finish
+[debug] [2026-02-13T19:09:42.143Z] DEBUG: Finishing up request with event=close
+[debug] [2026-02-13T19:09:42.143Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-13T19:09:42.144Z] <<< [apiv2][status] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ 500
+[debug] [2026-02-13T19:09:42.144Z] <<< [apiv2][body] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ {"error":{"message":"INTERNAL","status":"INTERNAL"}}
+[debug] [2026-02-13T19:09:46.154Z] >>> [apiv2][query] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ [none]
+[debug] [2026-02-13T19:09:46.154Z] >>> [apiv2][body] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ {"data":{"address":"3335 Dexter Street","city":"Denver"}}
+[debug] [2026-02-13T19:09:46.155Z] [work-queue] {"queuedWork":["/home-search-hq/us-central1/getCommute/-2026-02-13T19:09:46.155Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-13T19:09:46.155Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/home-search-hq/us-central1/getCommute/-2026-02-13T19:09:46.155Z"],"workRunningCount":1}
+[debug] [2026-02-13T19:09:46.155Z] Accepted request POST /home-search-hq/us-central1/getCommute/ --> us-central1-getCommute
+[debug] [2026-02-13T19:09:46.156Z] DEBUG: [functions] Runtime ready! Sending request!
+[debug] [2026-02-13T19:09:46.156Z] DEBUG: [functions] Got req.url=/home-search-hq/us-central1/getCommute/, mapping to path=/
+[debug] [2026-02-13T19:09:46.156Z] DEBUG: [worker-pool] submitRequest(triggerId=us-central1-getCommute)
+[debug] [2026-02-13T19:09:46.156Z] [functions] Beginning execution of "us-central1-getCommute"
+[debug] [2026-02-13T19:09:46.156Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: BUSY
+[info] >  {"verifications":{"app":"MISSING","auth":"MISSING"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"} {"user":{"verifications":{"app":"MISSING","auth":"MISSING"},"logging.googleapis.com/labels":{"firebase-log-type":"callable-request-verification"},"severity":"DEBUG","message":"Callable request verification passed"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-getCommute"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"verifications\":{\"app\":\"MISSING\",\"auth\":\"MISSING\"},\"logging.googleapis.com/labels\":{\"firebase-log-type\":\"callable-request-verification\"},\"severity\":\"DEBUG\",\"message\":\"Callable request verification passed\"}"}}
+[info] >  {"severity":"ERROR","message":"Unhandled error TypeError: Converting circular structure to JSON\n    --> starting at object with constructor 'Socket'\n    |     property 'parser' -> object with constructor 'HTTPParser'\n    --- property 'socket' closes the circle\n    at JSON.stringify (<anonymous>)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\index.js:148:42\n    at fixedLen (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\v2\\providers\\https.js:131:34)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\common\\providers\\https.js:513:20\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async runFunction (C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:399:9)\n    at async runHTTPS (C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:424:5)\n    at async C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:585:21"} {"user":{"severity":"ERROR","message":"Unhandled error TypeError: Converting circular structure to JSON\n    --> starting at object with constructor 'Socket'\n    |     property 'parser' -> object with constructor 'HTTPParser'\n    --- property 'socket' closes the circle\n    at JSON.stringify (<anonymous>)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\index.js:148:42\n    at fixedLen (C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\v2\\providers\\https.js:131:34)\n    at C:\\Users\\Peter\\home-search-hq\\functions\\node_modules\\firebase-functions\\lib\\common\\providers\\https.js:513:20\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async runFunction (C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:399:9)\n    at async runHTTPS (C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:424:5)\n    at async C:\\Users\\Peter\\AppData\\Roaming\\npm\\node_modules\\firebase-tools\\lib\\emulator\\functionsEmulatorRuntime.js:585:21"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-getCommute"},"extension":{},"message":"\u001b[90m> \u001b[39m {\"severity\":\"ERROR\",\"message\":\"Unhandled error TypeError: Converting circular structure to JSON\\n    --> starting at object with constructor 'Socket'\\n    |     property 'parser' -> object with constructor 'HTTPParser'\\n    --- property 'socket' closes the circle\\n    at JSON.stringify (<anonymous>)\\n    at C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\index.js:148:42\\n    at fixedLen (C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\firebase-functions\\\\lib\\\\v2\\\\providers\\\\https.js:131:34)\\n    at C:\\\\Users\\\\Peter\\\\home-search-hq\\\\functions\\\\node_modules\\\\firebase-functions\\\\lib\\\\common\\\\providers\\\\https.js:513:20\\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\\n    at async runFunction (C:\\\\Users\\\\Peter\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\firebase-tools\\\\lib\\\\emulator\\\\functionsEmulatorRuntime.js:399:9)\\n    at async runHTTPS (C:\\\\Users\\\\Peter\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\firebase-tools\\\\lib\\\\emulator\\\\functionsEmulatorRuntime.js:424:5)\\n    at async C:\\\\Users\\\\Peter\\\\AppData\\\\Roaming\\\\npm\\\\node_modules\\\\firebase-tools\\\\lib\\\\emulator\\\\functionsEmulatorRuntime.js:585:21\"}"}}
+[debug] [2026-02-13T19:09:46.158Z] DEBUG: Finishing up request with event=pause
+[debug] [2026-02-13T19:09:46.158Z] [functions] Finished "us-central1-getCommute" in 1.9288ms
+[debug] [2026-02-13T19:09:46.158Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: IDLE
+[debug] [2026-02-13T19:09:46.158Z] DEBUG: Finishing up request with event=finish
+[debug] [2026-02-13T19:09:46.158Z] DEBUG: Finishing up request with event=close
+[debug] [2026-02-13T19:09:46.158Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-13T19:09:46.158Z] <<< [apiv2][status] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ 500
+[debug] [2026-02-13T19:09:46.159Z] <<< [apiv2][body] POST http://127.0.0.1:5000/home-search-hq/us-central1/getCommute/ {"error":{"message":"INTERNAL","status":"INTERNAL"}}
+[debug] [2026-02-13T19:11:34.318Z] DEBUG: File C:\Users\Peter\home-search-hq\functions\index.js changed, reloading triggers
+[debug] [2026-02-13T19:11:35.327Z] Validating nodejs source
+[debug] [2026-02-13T19:11:36.233Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "24"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^13.6.0",
+    "firebase-functions": "^7.0.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.4.1"
+  },
+  "private": true
+}
+[debug] [2026-02-13T19:11:36.233Z] Building nodejs source
+[debug] [2026-02-13T19:11:36.233Z] Failed to find version of module node: reached end of search path C:\Users\Peter\home-search-hq\functions\node_modules
+[info] +  functions: Using node@24 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-02-13T19:11:36.234Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-02-13T19:11:36.274Z] Found firebase-functions binary at 'C:\Users\Peter\home-search-hq\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8133
+
+[debug] [2026-02-13T19:11:37.065Z] Got response from /__/functions.yaml {"endpoints":{"extractListing":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"extractListing"},"getCommute":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"getCommute"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2026-02-13T19:11:41.112Z] [functions] Loaded functions definitions from source: extractListing, getCommute.
+[debug] [2026-02-13T19:11:41.113Z] DEBUG: [worker-pool] Shutting down IDLE worker (us-central1-getCommute)
+[debug] [2026-02-13T19:11:41.113Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: FINISHING
+[debug] [2026-02-13T19:11:41.120Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: exited
+[debug] [2026-02-13T19:11:41.120Z] DEBUG: [worker-us-central1-getCommute-768b7a87-5d5e-41c3-b76e-747ef92fe944]: FINISHED

@@ -52,16 +52,18 @@ function extractAddressFromUrl(url) {
   return null;
 }
 
-exports.extractListing = functions.https.onCall(async (req) => {
+exports.extractListing = functions.https.onCall(async (data) => {
   const CLAUDE_KEY = process.env.CLAUDE_KEY;
 
-  // firebase-functions v7: data is in req.data
-  const d = req.data || req;
-
+  // Try multiple paths to find the URL
   var url = null;
-  if (typeof d === "string") url = d;
-  else if (d && d.url) url = d.url;
+  if (typeof data === "string") url = data;
+  else if (data && data.url) url = data.url;
+  else if (data && data.data && data.data.url) url = data.data.url;
 
+  console.log("data type:", typeof data);
+  console.log("data.url:", data ? data.url : "no data");
+  console.log("data keys:", data ? Object.keys(data).join(", ") : "no data");
   console.log("Resolved URL:", url);
 
   if (!url) {
@@ -140,43 +142,27 @@ exports.extractListing = functions.https.onCall(async (req) => {
   }
 });
 
-exports.getCommute = functions.https.onCall(async (req) => {
+exports.getCommute = functions.https.onCall(async (data) => {
   const GMAPS_KEY = process.env.GMAPS_KEY;
-
-  // Handle both v1 (data passed directly) and v2 (data inside req.data)
-  const d = req.data || req;
-  const addr = d.address;
-  const city = d.city;
-  const depTime = d.departureTime;
-
-  console.log("Commute request for:", addr, city, "departure:", depTime || "now", "key exists:", !!GMAPS_KEY);
-
-  if (!addr) {
-    console.error("No address provided. Keys available:", Object.keys(d));
-    return { commute: null };
-  }
-
-  const origin = encodeURIComponent(addr + ", " + (city || "Denver") + ", CO");
+  const origin = encodeURIComponent(
+    data.address + ", " + (data.city || "Denver") + ", CO"
+  );
   const dest = encodeURIComponent(WORK_ADDRESS);
 
+  // Build departure_time: use provided timestamp or default to now
   let departureParam = "&departure_time=now";
-  if (depTime) {
-    departureParam = "&departure_time=" + depTime;
+  if (data.departureTime) {
+    departureParam = "&departure_time=" + data.departureTime;
   }
 
-  const url = "https://maps.googleapis.com/maps/api/directions/json" +
+  const res = await fetch(
+    "https://maps.googleapis.com/maps/api/directions/json" +
     "?origin=" + origin +
     "&destination=" + dest +
     departureParam +
-    "&key=" + GMAPS_KEY;
-
-  const res = await fetch(url);
+    "&key=" + GMAPS_KEY
+  );
   const result = await res.json();
-
-  console.log("Directions status:", result.status);
-  if (result.error_message) {
-    console.error("API error:", result.error_message);
-  }
 
   if (result.routes && result.routes.length > 0) {
     const leg = result.routes[0].legs[0];

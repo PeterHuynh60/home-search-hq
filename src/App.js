@@ -71,9 +71,11 @@ async function doExtractListing(url) {
   }
 }
 
-async function doFetchCommute(addr, city) {
+async function doFetchCommute(addr, city, departureTime) {
   try {
-    var result = await getCommuteFn({ address: addr, city: city });
+    var params = { address: addr, city: city };
+    if (departureTime) params.departureTime = departureTime;
+    var result = await getCommuteFn(params);
     return result.data.commute;
   } catch (e) {
     console.error("Commute fail:", e);
@@ -699,36 +701,34 @@ function HomeCard(props) {
     : h.address;
 
   return (
-    <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+(ex?C.primary+"66":C.cardBorder),overflow:"hidden",boxShadow:ex?"0 2px 12px #55c27822":"0 1px 4px #0001",transition:"all 0.2s ease",cursor:"pointer"}} onClick={function(e){if(e.target.tagName!=="INPUT"&&e.target.tagName!=="SELECT"&&e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&!e.target.closest("button")&&!e.target.closest("a")&&!e.target.closest("label"))tog(h.id)}}>
+    <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+(ex?C.primary+"66":C.cardBorder),overflow:"hidden",boxShadow:ex?"0 2px 12px #55c27822":"0 1px 4px #0001",transition:"all 0.2s ease",cursor:"pointer",height:"100%",display:"flex",flexDirection:"column"}} onClick={function(e){if(e.target.tagName!=="INPUT"&&e.target.tagName!=="SELECT"&&e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&!e.target.closest("button")&&!e.target.closest("a")&&!e.target.closest("label"))tog(h.id)}}>
       <div style={{height:3,background:sc}} />
-      {/* Photo on top */}
-      {h.photoUrl && <div style={{width:"100%",height:ex?180:110,overflow:"hidden",background:C.inputBg,position:"relative"}}>
-        <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
-      </div>}
-      {/* Card Body */}
-      <div style={{padding:"8px 10px 10px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap",marginBottom:2}}>
-          <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
-          {h.sold && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
-          {h.pending && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
-          {h.tooExpensive && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
-        </div>
-        <h3 style={{margin:"0 0 1px",fontSize:12,fontFamily:"var(--head)",fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{addrContent}</h3>
-        <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",marginBottom:4}}>{h.city}{h.neighborhood ? " · "+h.neighborhood : ""}</div>
-        <div style={{fontSize:16,fontWeight:800,color:C.primary,fontFamily:"var(--head)"}}>${h.price.toLocaleString()}</div>
-        <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:4}}>{h.sqft.toLocaleString()} sqft · ${ppsf}/sf · {h.bed}bd/{h.bath}ba</div>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap",fontSize:10,fontFamily:"var(--body)",alignItems:"center"}}>
-          <span style={{color:C.primary,fontWeight:700}}>${fmtNum(tot30)}/mo</span>
-          {h.commute != null && <span style={{color:"#0d6efd",fontWeight:600}}>🚗{h.commute}m</span>}
-        </div>
-        <div style={{display:"flex",gap:6,marginTop:4,alignItems:"center",flexWrap:"wrap"}}>
-          <RatingBar label="M" value={mR} color="#e83e8c" />
-          <RatingBar label="P" value={pR} color={C.primary} />
-          {tR != null && <span style={{fontSize:10,fontWeight:700,color:C.text,background:C.inputBg,padding:"0px 5px",borderRadius:4}}>{"Σ"+tR+((mR==null||pR==null)?"*":"")}</span>}
-          {onMap && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:9,fontFamily:"var(--body)",padding:"1px 0"}}>📍</button>}
+      {/* Photo left + info right */}
+      <div style={{display:"flex",flex:1}}>
+        {h.photoUrl && <div style={{width:ex?280:90,flexShrink:0,background:C.inputBg,alignSelf:"stretch",position:"relative",minHeight:80,overflow:"hidden",transition:"width 0.3s ease"}}>
+          <img src={h.photoUrl} alt="" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center center",display:"block"}} onError={function(e){e.target.parentElement.style.display="none"}} />
+        </div>}
+        <div style={{padding:"8px 10px",flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap",marginBottom:2}}>
+            <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
+            {h.sold && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
+            {h.pending && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
+            {h.tooExpensive && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
+          </div>
+          <h3 style={{margin:"0 0 1px",fontSize:11,fontFamily:"var(--head)",fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{addrContent}</h3>
+          <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.city}{h.neighborhood ? " · "+h.neighborhood : ""}</div>
+          <div style={{fontSize:15,fontWeight:800,color:C.primary,fontFamily:"var(--head)",lineHeight:1}}>${h.price.toLocaleString()}</div>
+          <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.sqft.toLocaleString()}sf · {h.bed}bd/{h.bath}ba · ${fmtNum(tot30)}/mo</div>
+          <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+            <RatingBar label="M" value={mR} color="#e83e8c" />
+            <RatingBar label="P" value={pR} color={C.primary} />
+            {tR != null && <span style={{fontSize:9,fontWeight:700,color:C.text,background:C.inputBg,padding:"0px 4px",borderRadius:4}}>{"Σ"+tR+((mR==null||pR==null)?"*":"")}</span>}
+            {h.commute != null && <span style={{fontSize:9,color:"#0d6efd",fontWeight:600}}>🚗{h.commute}m</span>}
+            {onMap && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:9,fontFamily:"var(--body)",padding:"1px 0"}}>📍</button>}
+          </div>
         </div>
       </div>
-      {ex && <div style={{borderTop:"1px solid "+C.cardBorder,padding:"14px 16px",background:C.inputBg}} onClick={function(e){e.stopPropagation()}}>
+      {ex && <div className="card-expand" style={{borderTop:"1px solid "+C.cardBorder,padding:"14px 16px",background:C.inputBg}} onClick={function(e){e.stopPropagation()}}>
         <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>
           <span>Kitchen <strong style={{color:C.text}}>{h.kitchen}</strong></span>
           <span>Parking <strong style={{color:C.text}}>{h.parking}</strong></span>
@@ -842,6 +842,50 @@ function Dashboard(props) {
   var _showLogin = useState(false); var showLogin = _showLogin[0]; var setShowLogin = _showLogin[1];
   var mapFocusRef = React.useRef(null);
   var mapPanelRef = React.useRef(null);
+  var _comDay = useState("1"); var comDay = _comDay[0]; var setComDay = _comDay[1]; // 0=Sun, 1=Mon...
+  var _comTime = useState("08:00"); var comTime = _comTime[0]; var setComTime = _comTime[1];
+  var _comLoading = useState(false); var comLoading = _comLoading[0]; var setComLoading = _comLoading[1];
+  var _comProgress = useState(""); var comProgress = _comProgress[0]; var setComProgress = _comProgress[1];
+
+  function getNextDepartureTimestamp(dayOfWeek, timeStr) {
+    // dayOfWeek: 0=Sun, 1=Mon... timeStr: "08:00"
+    var parts = timeStr.split(":");
+    var hrs = parseInt(parts[0]); var mins = parseInt(parts[1]) || 0;
+    var now = new Date();
+    var target = new Date(now);
+    var diff = (parseInt(dayOfWeek) - now.getDay() + 7) % 7;
+    if (diff === 0 && (now.getHours() > hrs || (now.getHours() === hrs && now.getMinutes() >= mins))) diff = 7;
+    target.setDate(now.getDate() + diff);
+    target.setHours(hrs, mins, 0, 0);
+    return Math.floor(target.getTime() / 1000);
+  }
+
+  async function recalcAllCommutes() {
+    setComLoading(true);
+    var ts = getNextDepartureTimestamp(comDay, comTime);
+    var count = 0;
+    for (var i = 0; i < homes.length; i++) {
+      var h = homes[i];
+      setComProgress((i + 1) + "/" + homes.length + " — " + h.address);
+      try {
+        // Try with departure time first, fall back to without
+        var mins = await doFetchCommute(h.address, h.city, ts);
+        if (mins == null) {
+          mins = await doFetchCommute(h.address, h.city, null);
+        }
+        console.log(h.address, "→", mins, "min");
+        if (mins != null) {
+          await updateDoc(doc(db, "homes", h.id), { commute: mins });
+          count++;
+        }
+      } catch (err) {
+        console.error("Commute error for", h.address, err);
+      }
+    }
+    setComProgress("Done! Updated " + count + " of " + homes.length);
+    setComLoading(false);
+    setTimeout(function() { setComProgress(""); }, 3000);
+  }
 
   useEffect(function() {
     var unsub = onSnapshot(collection(db, "homes"), function(snap) {
@@ -886,7 +930,7 @@ function Dashboard(props) {
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"var(--body)",color:C.text}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}@media(min-width:1600px){.hshq-scale{zoom:1.25}}@media(min-width:2200px){.hshq-scale{zoom:1.4}}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}@media(min-width:1600px){.hshq-scale{zoom:1.25}}@media(min-width:2200px){.hshq-scale{zoom:1.4}}@keyframes slideDown{from{max-height:0;opacity:0}to{max-height:800px;opacity:1}}.card-expand{animation:slideDown 0.3s ease-out forwards;overflow:hidden}.hshq-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}@media(max-width:1200px){.hshq-cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.hshq-cards{grid-template-columns:repeat(2,1fr)}.hshq-sidebar{display:none!important}.hshq-mobile-filters{display:block!important}.hshq-layout{flex-direction:column!important}.hshq-main{width:100%!important}}@media(max-width:600px){.hshq-cards{grid-template-columns:1fr}}`}</style>
 
       <div className="hshq-scale">
       {/* Green Header Banner */}
@@ -909,8 +953,19 @@ function Dashboard(props) {
         <MortgageBar cfg={cfg} onChange={setCfg} />
 
         <div style={{marginBottom:16}}>
-          <div style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+          <div style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:10,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
             <span style={{color:"#0d6efd"}}>📍</span> Commute to: <span style={{color:"#0d6efd"}}>{WORK_ADDRESS}</span>
+            {canEdit && <span style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+              <select value={comDay} onChange={function(e){setComDay(e.target.value)}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"4px 6px",color:C.text,fontSize:11,fontFamily:"var(--body)",outline:"none",cursor:"pointer"}}>
+                <option value="1">Mon</option><option value="2">Tue</option><option value="3">Wed</option>
+                <option value="4">Thu</option><option value="5">Fri</option><option value="6">Sat</option><option value="0">Sun</option>
+              </select>
+              <input type="time" value={comTime} onChange={function(e){setComTime(e.target.value)}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"4px 6px",color:C.text,fontSize:11,fontFamily:"var(--body)",outline:"none"}} />
+              <button onClick={recalcAllCommutes} disabled={comLoading} style={{background:comLoading?"#ccc":C.primary,color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",cursor:comLoading?"not-allowed":"pointer",fontSize:11,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>
+                {comLoading ? "⏳ Calculating..." : "🔄 Recalc Commutes"}
+              </button>
+              {comProgress && <span style={{fontSize:10,color:"#0d6efd",fontFamily:"var(--body)"}}>{comProgress}</span>}
+            </span>}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8}}>
             {[["Total",homes.length],["Active",activeCount],["Toured",touredCount],["Avg Price","$"+Math.round(avgPrice/1000)+"k"]].map(function(item){
@@ -933,15 +988,19 @@ function Dashboard(props) {
         </div>
 
         {/* Sidebar + Main Content */}
-        <div style={{display:"flex",gap:18,alignItems:"flex-start"}}>
+        <div className="hshq-layout" style={{display:"flex",gap:18,alignItems:"flex-start"}}>
 
-          {/* Sticky Sidebar Filters */}
-          <div style={{width:220,flexShrink:0,position:"sticky",top:20,maxHeight:"calc(100vh - 40px)",overflowY:"auto"}}>
+          {/* Sticky Sidebar Filters - hidden on mobile */}
+          <div className="hshq-sidebar" style={{width:220,flexShrink:0,position:"sticky",top:20,maxHeight:"calc(100vh - 40px)",overflowY:"auto"}}>
             <SidebarFilters filters={filters} onChange={setFilters} />
           </div>
 
           {/* Main Content */}
-          <div style={{flex:1,minWidth:0}}>
+          <div className="hshq-main" style={{flex:1,minWidth:0}}>
+            {/* Mobile Filters - shown only on mobile */}
+            <div className="hshq-mobile-filters" style={{display:"none",marginBottom:12}}>
+              <FilterPanel filters={filters} onChange={setFilters} />
+            </div>
             <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
           <input type="text" placeholder="Search address, city, notes..." value={search} onChange={function(e){setSearch(e.target.value)}}
             style={{flex:"1 1 180px",background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none",minWidth:160}} />
@@ -967,7 +1026,7 @@ function Dashboard(props) {
 
         <div style={{fontSize:12,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>Showing {filtered.length} of {homes.length}</div>
 
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+        <div className="hshq-cards">
           {filtered.map(function(h) {
             var isExpanded = exId===h.id;
             return <div key={h.id} style={isExpanded?{gridColumn:"1/-1"}:{}}>
