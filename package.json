@@ -2,7 +2,7 @@
   "name": "home-search-hq",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://peterhuynh60.github.io/home-search-hq",
+  "homepage": "https://home.huynh.place",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
