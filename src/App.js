@@ -683,8 +683,8 @@ function ManualModal(props) {
 /* ─── Home Card (Compact Box) ─── */
 function HomeCard(props) {
   var h = props.home, u = props.onUpdate, del = props.onDelete, ex = props.expanded, tog = props.onToggle, cfg = props.cfg, canEdit = props.canEdit, onMap = props.onShowOnMap;
-  var dp = h.downPayment != null ? h.downPayment : calcDown(h.price, cfg);
-  var highDown = h.downPayment == null && (h.price * (cfg.downPct / 100)) > cfg.maxDown;
+  var dp = calcDown(h.price, cfg);
+  var highDown = (h.price * (cfg.downPct / 100)) > cfg.maxDown;
   var ln = h.price - dp;
   var m30 = calcPmt(cfg.rate30, cfg.term30, ln);
   var m15 = calcPmt(cfg.rate15, cfg.term15, ln);
@@ -920,7 +920,7 @@ function Dashboard(props) {
     if (sortBy === "price") { list.sort(function(a,b){return sortDir==="asc"?a.price-b.price:b.price-a.price}); }
     else if (sortBy === "sqft") { list.sort(function(a,b){return sortDir==="asc"?a.sqft-b.sqft:b.sqft-a.sqft}); }
     else if (sortBy === "rating") { list.sort(function(a,b){ function r(h){var x=[];if(h.michelleRating!=null)x.push(h.michelleRating);if(h.peterRating!=null)x.push(h.peterRating);var s=0;for(var i=0;i<x.length;i++)s+=x[i];return x.length?s:-1} return sortDir==="asc"?r(a)-r(b):r(b)-r(a) }); }
-    else if (sortBy === "monthly") { list.sort(function(a,b){ function t(h){var d=h.downPayment!=null?h.downPayment:calcDown(h.price,cfg);return calcPmt(cfg.rate30,cfg.term30,h.price-d)+(h.hoa||0)+(cfg.insPct/100)*h.price/12+(cfg.taxPct/100)*h.price/12} return sortDir==="asc"?t(a)-t(b):t(b)-t(a) }); }
+    else if (sortBy === "monthly") { list.sort(function(a,b){ function t(h){var d=calcDown(h.price,cfg);return calcPmt(cfg.rate30,cfg.term30,h.price-d)+(h.hoa||0)+(cfg.insPct/100)*h.price/12+(cfg.taxPct/100)*h.price/12} return sortDir==="asc"?t(a)-t(b):t(b)-t(a) }); }
     else if (sortBy === "added") { list.sort(function(a,b){ var ta = a.addedAt||a.added||""; var tb = b.addedAt||b.added||""; return sortDir==="asc"?ta.localeCompare(tb):tb.localeCompare(ta) }); }
     else if (sortBy === "commute") { if(sortDir==="asc") list.sort(function(a,b){return (a.commute||999)-(b.commute||999)}); else list.sort(function(a,b){return (b.commute||-1)-(a.commute||-1)}); }
     return list;
