@@ -5,7 +5,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebas
 
 var WORK_ADDRESS = "1635 Aurora Ct, Aurora, CO 80045";
 var WORK_COORDS = { lat: 39.7392, lng: -104.8374 };
-var DEFAULT_CFG = { rate15:4.6, rate30:5.75, term15:15, term30:30, maxDown:80000, downPct:20, insPct:0.5, taxPct:0.55 };
+var DEFAULT_CFG = { rate15:4.99, rate30:5.99, term15:15, term30:30, maxDown:80000, downPct:20, insPct:0.5, taxPct:0.55 };
 var STATUSES = ["Excellent","Good","Hmm...","Meh","Out","Waiting"];
 var ST_COLORS = { Excellent:"#0d6efd","Good":"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545",Waiting:"#17a2b8" };
 
