@@ -5,7 +5,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebas
 
 var WORK_ADDRESS = "1635 Aurora Ct, Aurora, CO 80045";
 var WORK_COORDS = { lat: 39.7392, lng: -104.8374 };
-var DEFAULT_CFG = { rate15:4.6, rate30:5.75, term15:15, term30:30, minDown:95000, downPct:20, insPct:0.5, taxPct:0.55 };
+var DEFAULT_CFG = { rate15:4.6, rate30:5.75, term15:15, term30:30, maxDown:80000, downPct:20, insPct:0.5, taxPct:0.55 };
 var STATUSES = ["Excellent","Good","Hmm...","Meh","Out","Waiting"];
 var ST_COLORS = { Excellent:"#0d6efd","Good":"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545",Waiting:"#17a2b8" };
 
@@ -53,7 +53,8 @@ function calcPmt(ratePct, years, principal) {
 }
 
 function calcDown(price, cfg) {
-  return Math.max(price * (cfg.downPct / 100), cfg.minDown);
+  var pctDown = price * (cfg.downPct / 100);
+  return Math.min(pctDown, cfg.maxDown);
 }
 
 function fmtNum(n) {
@@ -225,7 +226,7 @@ function MortgageBar(props) {
         <MortgageField label="30-YR RATE" value={cfg.rate30} suffix="%" onCommit={function(v){commit("rate30",v)}} />
         <MortgageField label="15-YR TERM" value={cfg.term15} suffix="yrs" step="1" onCommit={function(v){commit("term15",v)}} />
         <MortgageField label="30-YR TERM" value={cfg.term30} suffix="yrs" step="1" onCommit={function(v){commit("term30",v)}} />
-        <MortgageField label="MIN DOWN" value={cfg.minDown} suffix="$" step="1000" onCommit={function(v){commit("minDown",v)}} />
+        <MortgageField label="MAX DOWN" value={cfg.maxDown} suffix="$" step="1000" onCommit={function(v){commit("maxDown",v)}} />
         <MortgageField label="DOWN %" value={cfg.downPct} suffix="%" step="1" onCommit={function(v){commit("downPct",v)}} />
         <MortgageField label="INS %" value={cfg.insPct} suffix="% ann" onCommit={function(v){commit("insPct",v)}} />
         <MortgageField label="TAX %" value={cfg.taxPct} suffix="% ann" onCommit={function(v){commit("taxPct",v)}} />
@@ -683,6 +684,7 @@ function ManualModal(props) {
 function HomeCard(props) {
   var h = props.home, u = props.onUpdate, del = props.onDelete, ex = props.expanded, tog = props.onToggle, cfg = props.cfg, canEdit = props.canEdit, onMap = props.onShowOnMap;
   var dp = h.downPayment != null ? h.downPayment : calcDown(h.price, cfg);
+  var highDown = h.downPayment == null && (h.price * (cfg.downPct / 100)) > cfg.maxDown;
   var ln = h.price - dp;
   var m30 = calcPmt(cfg.rate30, cfg.term30, ln);
   var m15 = calcPmt(cfg.rate15, cfg.term15, ln);
@@ -714,6 +716,7 @@ function HomeCard(props) {
             {h.sold && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
             {h.pending && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
             {h.tooExpensive && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
+            {highDown && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#e8390622",color:"#e83906",fontFamily:"var(--body)"}}>HIGH DOWN</span>}
           </div>
           <h3 style={{margin:"0 0 1px",fontSize:11,fontFamily:"var(--head)",fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{addrContent}</h3>
           <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.city}{h.neighborhood ? " · "+h.neighborhood : ""}</div>
