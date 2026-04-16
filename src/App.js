@@ -464,59 +464,6 @@ function MapPanel(props) {
       zIndex: 1000
     });
 
-    // Neighborhood highlight boundaries
-    try {
-    var neighborhoods = [
-      {
-        name: "North Park Hill",
-        color: "#55c278",
-        coords: [
-          {lat:39.7612,lng:-104.9407},{lat:39.7612,lng:-104.9014},
-          {lat:39.7388,lng:-104.9014},{lat:39.7388,lng:-104.9407}
-        ]
-      },
-      {
-        name: "South Park Hill",
-        color: "#0d6efd",
-        coords: [
-          {lat:39.7388,lng:-104.9407},{lat:39.7388,lng:-104.9014},
-          {lat:39.7197,lng:-104.9014},{lat:39.7197,lng:-104.9407}
-        ]
-      },
-      {
-        name: "Central Park",
-        color: "#e91e9c",
-        coords: [
-          {lat:39.7751,lng:-104.9014},{lat:39.7751,lng:-104.8530},
-          {lat:39.7388,lng:-104.8530},{lat:39.7388,lng:-104.9014}
-        ]
-      }
-    ];
-
-    for (var ni = 0; ni < neighborhoods.length; ni++) {
-      var n = neighborhoods[ni];
-      new gm.Polygon({
-        paths: n.coords,
-        strokeColor: n.color,
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: n.color,
-        fillOpacity: 0.12,
-        map: mapInstance.current,
-        zIndex: 1
-      });
-      var labelLat = 0, labelLng = 0;
-      for (var ci = 0; ci < n.coords.length; ci++) { labelLat += n.coords[ci].lat; labelLng += n.coords[ci].lng; }
-      labelLat /= n.coords.length; labelLng /= n.coords.length;
-      new gm.Marker({
-        position: {lat:labelLat,lng:labelLng},
-        map: mapInstance.current,
-        icon: {url:"data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>'),scaledSize:new gm.Size(1,1)},
-        label: {text:n.name,color:n.color,fontSize:"11px",fontWeight:"700",fontFamily:"Muli,sans-serif"},
-        zIndex: 2
-      });
-    }
-    } catch(e) { console.error("Neighborhood overlay error:", e); }
   }, [ready, open]);
 
   useEffect(function() {
