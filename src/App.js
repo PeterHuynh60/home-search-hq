@@ -25,7 +25,7 @@ var S_OPTS = ["House","Townhouse","Condo"];
 var P_OPTS = ["None","Reserved (1)","Reserved (2)","Garage (1)","Garage (2)"];
 var BED_OPTS = ["1","2","3","4+"];
 var BATH_OPTS = ["1","1.5","2","2.5","3+"];
-var GMAPS_CLIENT_KEY = ""; // Paste your Google Maps JS API key here
+var GMAPS_CLIENT_KEY = "AIzaSyCxX5eVLsbZfPzRlOqKUz5HlS_M8OStBJ8";
 var AUTH_EMAIL = "home@search.hq";
 
 /* ─── Color Palette (matches huynh.place / bet.huynh.place) ─── */
@@ -463,6 +463,16 @@ function MapPanel(props) {
       title: "Work: " + WORK_ADDRESS,
       zIndex: 1000
     });
+
+    // Neighborhood highlight boundaries
+    var hoods = [
+      {name:"North Park Hill",color:"#55c278",path:[{lat:39.7612,lng:-104.9407},{lat:39.7612,lng:-104.9014},{lat:39.7388,lng:-104.9014},{lat:39.7388,lng:-104.9407}]},
+      {name:"South Park Hill",color:"#0d6efd",path:[{lat:39.7388,lng:-104.9407},{lat:39.7388,lng:-104.9014},{lat:39.7197,lng:-104.9014},{lat:39.7197,lng:-104.9407}]},
+      {name:"Central Park",color:"#e91e9c",path:[{lat:39.7751,lng:-104.9014},{lat:39.7751,lng:-104.8530},{lat:39.7388,lng:-104.8530},{lat:39.7388,lng:-104.9014}]}
+    ];
+    for (var hi = 0; hi < hoods.length; hi++) {
+      new gm.Polygon({paths:hoods[hi].path,strokeColor:hoods[hi].color,strokeOpacity:0.8,strokeWeight:2,fillColor:hoods[hi].color,fillOpacity:0.12,map:mapInstance.current,zIndex:1});
+    }
 
   }, [ready, open]);
 
