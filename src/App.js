@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { db, auth, extractListingFn, getCommuteFn } from "./firebase";
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
@@ -466,9 +466,9 @@ function MapPanel(props) {
 
     // Neighborhood highlight boundaries
     var hoods = [
-      {name:"North Park Hill",color:"#55c278",path:[{lat:39.7750,lng:-104.9403},{lat:39.7750,lng:-104.9055},{lat:39.7650,lng:-104.9055},{lat:39.7650,lng:-104.9403}]},
-      {name:"South Park Hill",color:"#0d6efd",path:[{lat:39.7650,lng:-104.9403},{lat:39.7650,lng:-104.9055},{lat:39.7530,lng:-104.9055},{lat:39.7530,lng:-104.9403}]},
-      {name:"Central Park",color:"#e91e9c",path:[{lat:39.7920,lng:-104.9055},{lat:39.7920,lng:-104.8690},{lat:39.7530,lng:-104.8690},{lat:39.7530,lng:-104.9055}]}
+      {name:"North Park Hill",color:"#55c278",path:[{lat:39.7780,lng:-104.9403},{lat:39.7780,lng:-104.9055},{lat:39.7610,lng:-104.9055},{lat:39.7610,lng:-104.9403}]},
+      {name:"South Park Hill",color:"#0d6efd",path:[{lat:39.7610,lng:-104.9403},{lat:39.7610,lng:-104.9055},{lat:39.7490,lng:-104.9055},{lat:39.7490,lng:-104.9403}]},
+      {name:"Central Park",color:"#e91e9c",path:[{lat:39.7880,lng:-104.9055},{lat:39.7880,lng:-104.8690},{lat:39.7490,lng:-104.8690},{lat:39.7490,lng:-104.9055}]}
     ];
     for (var hi = 0; hi < hoods.length; hi++) {
       new gm.Polygon({paths:hoods[hi].path,strokeColor:hoods[hi].color,strokeOpacity:0.8,strokeWeight:2,fillColor:hoods[hi].color,fillOpacity:0.12,map:mapInstance.current,zIndex:1});
