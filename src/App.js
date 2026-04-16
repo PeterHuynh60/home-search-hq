@@ -277,9 +277,12 @@ function FilterPanel(props) {
           <ChkGroup label="PARKING" options={P_OPTS} selected={f.parking} onChange={function(v){set("parking",v)}} />
         </div>
       </div>
-      <div style={{display:"flex",gap:12,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
-        <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:f.toured?"#28a745":C.textMuted}}><input type="checkbox" checked={f.toured} onChange={function(e){set("toured",e.target.checked)}} /> Toured Only</label>
-        <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:f.momPick?"#e91e9c":C.textMuted}}><input type="checkbox" checked={f.momPick} onChange={function(e){set("momPick",e.target.checked)}} /> Mom's Picks</label>
+      <div style={{marginBottom:6,marginTop:4}}>
+        <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",marginBottom:5}}>OTHER</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          <button onClick={function(){set("toured",!f.toured)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.toured?"1px solid #28a745":"1px solid "+C.cardBorder,background:f.toured?"#28a74522":"transparent",color:f.toured?"#28a745":C.textMuted}}>Toured</button>
+          <button onClick={function(){set("momPick",!f.momPick)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.momPick?"1px solid #e91e9c":"1px solid "+C.cardBorder,background:f.momPick?"#e91e9c22":"transparent",color:f.momPick?"#e91e9c":C.textMuted}}>Mom's Pick</button>
+        </div>
       </div>
       <div style={{marginTop:8,display:"flex",justifyContent:"flex-end"}}>
         <button onClick={clearAll} style={{fontSize:11,fontFamily:"var(--body)",color:C.textMuted,background:"none",border:"1px solid "+C.cardBorder,borderRadius:6,padding:"4px 12px",cursor:"pointer"}}>Clear All</button>
@@ -310,9 +313,12 @@ function SidebarFilters(props) {
       <ChkGroup label="BEDROOMS" options={BED_OPTS} selected={f.bed} onChange={function(v){set("bed",v)}} />
       <ChkGroup label="BATHROOMS" options={BATH_OPTS} selected={f.bath} onChange={function(v){set("bath",v)}} />
       <ChkGroup label="PARKING" options={P_OPTS} selected={f.parking} onChange={function(v){set("parking",v)}} />
-      <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid "+C.cardBorder}}>
-        <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:f.toured?"#28a745":C.textMuted,marginBottom:6}}><input type="checkbox" checked={f.toured} onChange={function(e){set("toured",e.target.checked)}} /> Toured Only</label>
-        <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:f.momPick?"#e91e9c":C.textMuted}}><input type="checkbox" checked={f.momPick} onChange={function(e){set("momPick",e.target.checked)}} /> Mom's Picks</label>
+      <div style={{marginBottom:6}}>
+        <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",marginBottom:5}}>OTHER</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          <button onClick={function(){set("toured",!f.toured)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.toured?"1px solid #28a745":"1px solid "+C.cardBorder,background:f.toured?"#28a74522":"transparent",color:f.toured?"#28a745":C.textMuted}}>Toured</button>
+          <button onClick={function(){set("momPick",!f.momPick)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.momPick?"1px solid #e91e9c":"1px solid "+C.cardBorder,background:f.momPick?"#e91e9c22":"transparent",color:f.momPick?"#e91e9c":C.textMuted}}>Mom's Pick</button>
+        </div>
       </div>
     </div>
   );
@@ -459,6 +465,7 @@ function MapPanel(props) {
     });
 
     // Neighborhood highlight boundaries
+    try {
     var neighborhoods = [
       {
         name: "North Park Hill",
@@ -486,8 +493,9 @@ function MapPanel(props) {
       }
     ];
 
-    neighborhoods.forEach(function(n) {
-      var poly = new gm.Polygon({
+    for (var ni = 0; ni < neighborhoods.length; ni++) {
+      var n = neighborhoods[ni];
+      new gm.Polygon({
         paths: n.coords,
         strokeColor: n.color,
         strokeOpacity: 0.8,
@@ -497,18 +505,18 @@ function MapPanel(props) {
         map: mapInstance.current,
         zIndex: 1
       });
-      var labelPos = {
-        lat: n.coords.reduce(function(s,c){return s+c.lat},0)/n.coords.length,
-        lng: n.coords.reduce(function(s,c){return s+c.lng},0)/n.coords.length
-      };
+      var labelLat = 0, labelLng = 0;
+      for (var ci = 0; ci < n.coords.length; ci++) { labelLat += n.coords[ci].lat; labelLng += n.coords[ci].lng; }
+      labelLat /= n.coords.length; labelLng /= n.coords.length;
       new gm.Marker({
-        position: labelPos,
+        position: {lat:labelLat,lng:labelLng},
         map: mapInstance.current,
-        icon: {path:"M0 0",scale:0},
+        icon: {url:"data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"></svg>'),scaledSize:new gm.Size(1,1)},
         label: {text:n.name,color:n.color,fontSize:"11px",fontWeight:"700",fontFamily:"Muli,sans-serif"},
         zIndex: 2
       });
-    });
+    }
+    } catch(e) { console.error("Neighborhood overlay error:", e); }
   }, [ready, open]);
 
   useEffect(function() {
