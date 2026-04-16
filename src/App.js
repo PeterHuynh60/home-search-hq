@@ -5,7 +5,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebas
 
 var WORK_ADDRESS = "1635 Aurora Ct, Aurora, CO 80045";
 var WORK_COORDS = { lat: 39.7392, lng: -104.8374 };
-var DEFAULT_CFG = { rate15:4.99, rate30:5.99, term15:15, term30:30, maxDown:80000, downPct:20, insPct:0.5, taxPct:0.55 };
+var DEFAULT_CFG = { rate15:4.6, rate30:5.75, term15:15, term30:30, maxDown:80000, downPct:20, insPct:0.5, taxPct:0.55 };
 var STATUSES = ["Excellent","Good","Hmm...","Meh","Out","Waiting"];
 var ST_COLORS = { Excellent:"#0d6efd","Good":"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545",Waiting:"#17a2b8" };
 
@@ -25,7 +25,7 @@ var S_OPTS = ["House","Townhouse","Condo"];
 var P_OPTS = ["None","Reserved (1)","Reserved (2)","Garage (1)","Garage (2)"];
 var BED_OPTS = ["1","2","3","4+"];
 var BATH_OPTS = ["1","1.5","2","2.5","3+"];
-var GMAPS_CLIENT_KEY = "AIzaSyD1hrYrOaJyyOCdORxRcK1m_uLpZzSkvjQ"; // Paste your Google Maps JS API key here
+var GMAPS_CLIENT_KEY = ""; // Paste your Google Maps JS API key here
 var AUTH_EMAIL = "home@search.hq";
 
 /* ─── Color Palette (matches huynh.place / bet.huynh.place) ─── */
@@ -88,10 +88,33 @@ async function doFetchCommute(addr, city, departureTime) {
 var ist = {background:C.inputBg,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"6px 8px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none",boxSizing:"border-box",width:"100%"};
 
 function EF(props) {
+  var _ls = useState(props.value != null ? props.value : ""); var local = _ls[0]; var setLocal = _ls[1];
+  var _foc = useState(false); var focused = _foc[0]; var setFocused = _foc[1];
+  var inputRef = useRef(null);
+  var timerRef = useRef(null);
+
+  // Sync from parent only when not focused
+  useEffect(function() {
+    if (!focused) setLocal(props.value != null ? props.value : "");
+  }, [props.value, focused]);
+
+  function handleChange(e) {
+    var v = e.target.value;
+    setLocal(v);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(function() { props.onChange(v); }, 600);
+  }
+
+  function handleBlur() {
+    setFocused(false);
+    clearTimeout(timerRef.current);
+    props.onChange(local);
+  }
+
   return (
     <div style={props.span ? {gridColumn:props.span} : {}}>
       <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>{props.label.toUpperCase()}</label>
-      <input type={props.type || "text"} value={props.value != null ? props.value : ""} onChange={function(e){props.onChange(e.target.value)}} step={props.type === "number" ? "0.5" : undefined} style={ist} />
+      <input ref={inputRef} type={props.type || "text"} value={local} onChange={handleChange} onFocus={function(){setFocused(true)}} onBlur={handleBlur} step={props.type === "number" ? "0.5" : undefined} style={ist} />
     </div>
   );
 }
@@ -239,7 +262,7 @@ function MortgageBar(props) {
 function FilterPanel(props) {
   var f = props.filters;
   function set(k,v) { var nf = Object.assign({}, f); nf[k] = v; props.onChange(nf); }
-  function clearAll() { props.onChange({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[]}); }
+  function clearAll() { props.onChange({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[],toured:false,momPick:false}); }
   return (
     <Panel title="Filters" defaultOpen={true}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
@@ -254,6 +277,10 @@ function FilterPanel(props) {
           <ChkGroup label="PARKING" options={P_OPTS} selected={f.parking} onChange={function(v){set("parking",v)}} />
         </div>
       </div>
+      <div style={{display:"flex",gap:12,alignItems:"center",marginTop:8,flexWrap:"wrap"}}>
+        <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:f.toured?"#28a745":C.textMuted}}><input type="checkbox" checked={f.toured} onChange={function(e){set("toured",e.target.checked)}} /> Toured Only</label>
+        <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:f.momPick?"#e91e9c":C.textMuted}}><input type="checkbox" checked={f.momPick} onChange={function(e){set("momPick",e.target.checked)}} /> Mom's Picks</label>
+      </div>
       <div style={{marginTop:8,display:"flex",justifyContent:"flex-end"}}>
         <button onClick={clearAll} style={{fontSize:11,fontFamily:"var(--body)",color:C.textMuted,background:"none",border:"1px solid "+C.cardBorder,borderRadius:6,padding:"4px 12px",cursor:"pointer"}}>Clear All</button>
       </div>
@@ -265,10 +292,12 @@ function FilterPanel(props) {
 function SidebarFilters(props) {
   var f = props.filters;
   function set(k,v) { var nf = Object.assign({}, f); nf[k] = v; props.onChange(nf); }
-  function clearAll() { props.onChange({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[]}); }
+  function clearAll() { props.onChange({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[],toured:false,momPick:false}); }
   var activeCount = 0;
   var keys = ["status","style","kitchen","bed","bath","parking"];
   for (var i = 0; i < keys.length; i++) { if (f[keys[i]].length) activeCount += f[keys[i]].length; }
+  if (f.toured) activeCount++;
+  if (f.momPick) activeCount++;
   return (
     <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,padding:"14px 14px 10px",fontFamily:"var(--body)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -281,6 +310,10 @@ function SidebarFilters(props) {
       <ChkGroup label="BEDROOMS" options={BED_OPTS} selected={f.bed} onChange={function(v){set("bed",v)}} />
       <ChkGroup label="BATHROOMS" options={BATH_OPTS} selected={f.bath} onChange={function(v){set("bath",v)}} />
       <ChkGroup label="PARKING" options={P_OPTS} selected={f.parking} onChange={function(v){set("parking",v)}} />
+      <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid "+C.cardBorder}}>
+        <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:f.toured?"#28a745":C.textMuted,marginBottom:6}}><input type="checkbox" checked={f.toured} onChange={function(e){set("toured",e.target.checked)}} /> Toured Only</label>
+        <label style={{display:"flex",alignItems:"center",gap:4,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:f.momPick?"#e91e9c":C.textMuted}}><input type="checkbox" checked={f.momPick} onChange={function(e){set("momPick",e.target.checked)}} /> Mom's Picks</label>
+      </div>
     </div>
   );
 }
@@ -423,6 +456,58 @@ function MapPanel(props) {
       },
       title: "Work: " + WORK_ADDRESS,
       zIndex: 1000
+    });
+
+    // Neighborhood highlight boundaries
+    var neighborhoods = [
+      {
+        name: "North Park Hill",
+        color: "#55c278",
+        coords: [
+          {lat:39.7612,lng:-104.9407},{lat:39.7612,lng:-104.9014},
+          {lat:39.7388,lng:-104.9014},{lat:39.7388,lng:-104.9407}
+        ]
+      },
+      {
+        name: "South Park Hill",
+        color: "#0d6efd",
+        coords: [
+          {lat:39.7388,lng:-104.9407},{lat:39.7388,lng:-104.9014},
+          {lat:39.7197,lng:-104.9014},{lat:39.7197,lng:-104.9407}
+        ]
+      },
+      {
+        name: "Central Park",
+        color: "#e91e9c",
+        coords: [
+          {lat:39.7751,lng:-104.9014},{lat:39.7751,lng:-104.8530},
+          {lat:39.7388,lng:-104.8530},{lat:39.7388,lng:-104.9014}
+        ]
+      }
+    ];
+
+    neighborhoods.forEach(function(n) {
+      var poly = new gm.Polygon({
+        paths: n.coords,
+        strokeColor: n.color,
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: n.color,
+        fillOpacity: 0.12,
+        map: mapInstance.current,
+        zIndex: 1
+      });
+      var labelPos = {
+        lat: n.coords.reduce(function(s,c){return s+c.lat},0)/n.coords.length,
+        lng: n.coords.reduce(function(s,c){return s+c.lng},0)/n.coords.length
+      };
+      new gm.Marker({
+        position: labelPos,
+        map: mapInstance.current,
+        icon: {path:"M0 0",scale:0},
+        label: {text:n.name,color:n.color,fontSize:"11px",fontWeight:"700",fontFamily:"Muli,sans-serif"},
+        zIndex: 2
+      });
     });
   }, [ready, open]);
 
@@ -717,6 +802,7 @@ function HomeCard(props) {
             {h.pending && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
             {h.tooExpensive && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
             {highDown && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#e8390622",color:"#e83906",fontFamily:"var(--body)"}}>HIGH DOWN</span>}
+            {h.momPick && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#e91e9c22",color:"#e91e9c",fontFamily:"var(--body)"}}>MOM</span>}
           </div>
           <h3 style={{margin:"0 0 1px",fontSize:11,fontFamily:"var(--head)",fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{addrContent}</h3>
           <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.city}{h.neighborhood ? " · "+h.neighborhood : ""}</div>
@@ -740,7 +826,7 @@ function HomeCard(props) {
           <span>30yr <strong style={{color:C.primary}}>${fmtNum(tot30)}/mo</strong></span>
           <span>Down <strong style={{color:C.text}}>${fmtNum(dp)}</strong></span>
           <span>Loan <strong style={{color:C.text}}>${ln.toLocaleString()}</strong></span>
-          {h.tourStatus && <span>Tour <strong style={{color:C.text}}>{h.tourStatus}</strong></span>}
+          {h.tourStatus && <span>Tour <strong style={{color:"#28a745"}}>✓ Toured</strong></span>}
           {h.notes && <span style={{fontStyle:"italic"}}>{h.notes}</span>}
         </div>
         <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12,paddingBottom:12,borderBottom:"1px solid "+C.cardBorder}}>
@@ -769,6 +855,7 @@ function HomeCard(props) {
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.sold?"#dc3545":C.text}}><input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked){u(h.id,"pending",false);u(h.id,"tooExpensive",false)}}} /> Sold</label>
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}><input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"tooExpensive",false)}}} /> Pending</label>
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tooExpensive?"#6f42c1":C.text}}><input type="checkbox" checked={!!h.tooExpensive} onChange={function(e){u(h.id,"tooExpensive",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false)}}} /> $$$</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.momPick?"#e91e9c":C.text}}><input type="checkbox" checked={!!h.momPick} onChange={function(e){u(h.id,"momPick",e.target.checked)}} /> Mom's Pick</label>
             </div>
           </div>
           <div>
@@ -776,7 +863,13 @@ function HomeCard(props) {
             <div style={{fontSize:13,fontWeight:700,color:sc,fontFamily:"var(--body)",marginTop:4}}>{computedStatus}</div>
           </div>
           <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />
-          <EF label="Tour Status" value={h.tourStatus||""} onChange={function(v){u(h.id,"tourStatus",v)}} />
+          <div>
+            <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>TOURED</label>
+            <label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tourStatus?"#28a745":C.text,marginTop:4}}>
+              <input type="checkbox" checked={!!h.tourStatus} onChange={function(e){u(h.id,"tourStatus",e.target.checked?"Toured":"")}} />
+              {h.tourStatus ? "Toured" : "Not yet"}
+            </label>
+          </div>
           <EF label="Michelle (/10)" value={h.michelleRating!=null?h.michelleRating:""} type="number" onChange={function(v){u(h.id,"michelleRating",v===""?null:parseFloat(v))}} />
           <EF label="Peter (/10)" value={h.peterRating!=null?h.peterRating:""} type="number" onChange={function(v){u(h.id,"peterRating",v===""?null:parseFloat(v))}} />
           <EF label="Photo URL" value={h.photoUrl||""} onChange={function(v){u(h.id,"photoUrl",v)}} />
@@ -840,7 +933,7 @@ function Dashboard(props) {
   var _cd = useState("asc"); var sortDir = _cd[0]; var setSortDir = _cd[1];
   var _sr = useState(""); var search = _sr[0]; var setSearch = _sr[1];
   var _cfg = useState(DEFAULT_CFG); var cfg = _cfg[0]; var setCfg = _cfg[1];
-  var _fi = useState({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[]});
+  var _fi = useState({status:[],style:[],kitchen:[],bed:[],bath:[],parking:[],toured:false,momPick:false});
   var filters = _fi[0]; var setFilters = _fi[1];
   var _showLogin = useState(false); var showLogin = _showLogin[0]; var setShowLogin = _showLogin[1];
   var mapFocusRef = React.useRef(null);
@@ -916,6 +1009,8 @@ function Dashboard(props) {
     if (filters.parking.length) list = list.filter(function(h){return filters.parking.indexOf(h.parking)>=0});
     if (filters.bed.length) list = list.filter(function(h){return matchBed(h,filters.bed)});
     if (filters.bath.length) list = list.filter(function(h){return matchBath(h,filters.bath)});
+    if (filters.toured) list = list.filter(function(h){return !!h.tourStatus});
+    if (filters.momPick) list = list.filter(function(h){return !!h.momPick});
     if (search) { var t = search.toLowerCase(); list = list.filter(function(h){return h.address.toLowerCase().indexOf(t)>=0||h.city.toLowerCase().indexOf(t)>=0||(h.neighborhood||"").toLowerCase().indexOf(t)>=0||(h.notes||"").toLowerCase().indexOf(t)>=0}); }
     if (sortBy === "price") { list.sort(function(a,b){return sortDir==="asc"?a.price-b.price:b.price-a.price}); }
     else if (sortBy === "sqft") { list.sort(function(a,b){return sortDir==="asc"?a.sqft-b.sqft:b.sqft-a.sqft}); }
