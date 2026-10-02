@@ -746,7 +746,9 @@ function HomeCard(props) {
   var sc = ST_COLORS[computedStatus] || ST_COLORS.Waiting;
   var ppsf = h.sqft ? (h.price / h.sqft).toFixed(0) : "—";
 
-  var addrContent = h.link
+  var addrContent = h.masked
+    ? "🏡 " + h.address
+    : h.link
     ? <a href={h.link} target="_blank" rel="noopener noreferrer" style={{color:"inherit",textDecoration:"none",borderBottom:"1px solid "+C.primary+"55",paddingBottom:1}}>{h.address}</a>
     : h.address;
 
@@ -776,7 +778,7 @@ function HomeCard(props) {
             <RatingBar label="P" value={pR} color={C.primary} />
             {tR != null && <span style={{fontSize:9,fontWeight:700,color:C.text,background:C.inputBg,padding:"0px 4px",borderRadius:4}}>{"Σ"+tR+((mR==null||pR==null)?"*":"")}</span>}
             {h.commute != null && <span style={{fontSize:9,color:"#0d6efd",fontWeight:600}}>🚗{h.commute}m</span>}
-            {onMap && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:9,fontFamily:"var(--body)",padding:"1px 0"}}>📍</button>}
+            {onMap && !h.masked && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:9,fontFamily:"var(--body)",padding:"1px 0"}}>📍</button>}
           </div>
         </div>
       </div>
@@ -843,7 +845,7 @@ function HomeCard(props) {
           </div>
         </div>}
         {!canEdit && <div className="hshq-edit-grid">
-          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>ADDRESS</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.address}</div></div>
+          <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>ADDRESS</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.masked ? "Private" : h.address}</div></div>
           <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>CITY</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.city}</div></div>
           <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>NEIGHBORHOOD</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>{h.neighborhood||"—"}</div></div>
           <div><label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,display:"block",marginBottom:3}}>PRICE</label><div style={{fontSize:13,color:C.text,fontFamily:"var(--body)"}}>${h.price.toLocaleString()}</div></div>
@@ -950,8 +952,12 @@ function Dashboard(props) {
   useEffect(function() {
     var cancelled = false;
     function refetch() {
-      pb.collection("homes").getFullList().then(function(data) {
-        if (!cancelled) setHomes(data);
+      // Logged-out visitors can't read the bought home (our real address) from "homes";
+      // they get a masked stand-in built from the address-free homes_bought_public view.
+      var bought = canEdit ? Promise.resolve([]) : pb.collection("homes_bought_public").getFullList().catch(function() { return []; });
+      Promise.all([pb.collection("homes").getFullList(), bought]).then(function(res) {
+        var masked = res[1].map(function(h) { return Object.assign({}, h, { address: "Our Home", link: "", photoUrl: "", notes: "", masked: true }); });
+        if (!cancelled) setHomes(res[0].concat(masked));
       });
     }
     refetch();
@@ -960,7 +966,7 @@ function Dashboard(props) {
       cancelled = true;
       pb.collection("homes").unsubscribe("*");
     };
-  }, []);
+  }, [canEdit]);
 
   function upd(id, field, val) { var update = {}; update[field] = val; pb.collection("homes").update(id, update); }
   function del(id) { pb.collection("homes").delete(id); }
@@ -1046,7 +1052,7 @@ function Dashboard(props) {
         </div>
 
         <div ref={mapPanelRef}>
-        <MapPanel homes={filtered} gmapsKey={GMAPS_CLIENT_KEY} focusRef={mapFocusRef} onSelectHome={function(id){
+        <MapPanel homes={filtered.filter(function(h){return !h.masked})} gmapsKey={GMAPS_CLIENT_KEY} focusRef={mapFocusRef} onSelectHome={function(id){
           setExId(id);
           setTimeout(function(){
             var el = document.getElementById("home-card-" + id);
