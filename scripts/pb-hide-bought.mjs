@@ -3,9 +3,9 @@
 // - homes: logged-out visitors can no longer list/view/subscribe to the bought record,
 //   or to any record flagged `private` (e.g. other units in our building, which would
 //   give the address away just as well).
-// - homes_bought_public: a read-only view exposing only non-identifying fields of the
-//   bought home (no address, link, photo, notes), so the dashboard and huynh.place
-//   can still show a "We bought a home" card to the public.
+// - homes_masked_public: a read-only view exposing only non-identifying fields of those
+//   hidden records (no address, link, photo, notes), so the dashboard and huynh.place
+//   can still show them to the public as masked cards ("Our Home", "Private listing").
 //
 // Usage: PB_ADMIN_EMAIL=... PB_ADMIN_PASSWORD=... node scripts/pb-hide-bought.mjs
 
@@ -23,10 +23,12 @@ if (!PB_ADMIN_EMAIL || !PB_ADMIN_PASSWORD) {
 const pb = new PocketBase(PB_URL)
 
 const HOMES_READ_RULE = '(bought = false && private = false) || @request.auth.id != ""'
-const PUBLIC_VIEW_NAME = 'homes_bought_public'
+const PUBLIC_VIEW_NAME = 'homes_masked_public'
+const OLD_VIEW_NAMES = ['homes_bought_public']
 const PUBLIC_VIEW_QUERY = `SELECT id, city, neighborhood, style, price, sqft, bed, bath, hoa, kitchen,
-  parking, commute, michelleRating, peterRating, tourStatus, momPick, bought, added, addedAt
-  FROM homes WHERE bought = TRUE`
+  parking, commute, michelleRating, peterRating, tourStatus, momPick, bought, private, sold, pending,
+  tooExpensive, added, addedAt
+  FROM homes WHERE bought = TRUE OR private = TRUE`
 
 async function main() {
   await pb.collection('_superusers').authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD)
@@ -47,6 +49,13 @@ async function main() {
   } catch {
     await pb.collections.create(viewDef)
     console.log(`Created view "${PUBLIC_VIEW_NAME}".`)
+  }
+
+  for (const name of OLD_VIEW_NAMES) {
+    try {
+      await pb.collections.delete(name)
+      console.log(`Deleted old view "${name}".`)
+    } catch {}
   }
 
   console.log('Done.')

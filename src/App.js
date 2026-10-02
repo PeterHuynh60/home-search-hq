@@ -747,7 +747,7 @@ function HomeCard(props) {
   var ppsf = h.sqft ? (h.price / h.sqft).toFixed(0) : "—";
 
   var addrContent = h.masked
-    ? "🏡 " + h.address
+    ? (h.bought ? "🏡 " : "🔒 ") + h.address
     : h.link
     ? <a href={h.link} target="_blank" rel="noopener noreferrer" style={{color:"inherit",textDecoration:"none",borderBottom:"1px solid "+C.primary+"55",paddingBottom:1}}>{h.address}</a>
     : h.address;
@@ -954,11 +954,11 @@ function Dashboard(props) {
   useEffect(function() {
     var cancelled = false;
     function refetch() {
-      // Logged-out visitors can't read the bought home (our real address) from "homes";
-      // they get a masked stand-in built from the address-free homes_bought_public view.
-      var bought = canEdit ? Promise.resolve([]) : pb.collection("homes_bought_public").getFullList().catch(function() { return []; });
-      Promise.all([pb.collection("homes").getFullList(), bought]).then(function(res) {
-        var masked = res[1].map(function(h) { return Object.assign({}, h, { address: "Our Home", link: "", photoUrl: "", notes: "", masked: true }); });
+      // Logged-out visitors can't read the bought home (our real address) or private listings
+      // from "homes"; they get masked stand-ins built from the address-free homes_masked_public view.
+      var hidden = canEdit ? Promise.resolve([]) : pb.collection("homes_masked_public").getFullList().catch(function() { return []; });
+      Promise.all([pb.collection("homes").getFullList(), hidden]).then(function(res) {
+        var masked = res[1].map(function(h) { return Object.assign({}, h, { address: h.bought ? "Our Home" : "Private listing", link: "", photoUrl: "", notes: "", masked: true }); });
         if (!cancelled) setHomes(res[0].concat(masked));
       });
     }
