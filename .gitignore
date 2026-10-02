@@ -1,6 +1,14 @@
-node_modules/ 
-functions/node_modules/ 
-functions/.env 
-build/ 
-.firebase/ 
-functions/.env 
+node_modules/
+functions/node_modules/
+functions/.env
+build/
+.firebase/
+functions/.env
+
+# PocketBase/Firebase migration artifacts — contain personal data or secrets
+scripts/node_modules/
+scripts/homes-export.json
+scripts/.env
+service-account*.json
+*-firebase-adminsdk-*.json
+.env.local

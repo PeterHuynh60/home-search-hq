@@ -1,15 +1,14 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { db, auth, extractListingFn, getCommuteFn } from "./firebase";
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { pb, extractListingFn, getCommuteFn } from "./pocketbase";
 
 var WORK_ADDRESS = "1635 Aurora Ct, Aurora, CO 80045";
 var WORK_COORDS = { lat: 39.7392, lng: -104.8374 };
 var DEFAULT_CFG = { rate15:4.6, rate30:5.75, term15:15, term30:30, maxDown:80000, downPct:20, insPct:0.5, taxPct:0.55 };
-var STATUSES = ["Excellent","Good","Hmm...","Meh","Out","Waiting"];
-var ST_COLORS = { Excellent:"#0d6efd","Good":"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545",Waiting:"#17a2b8" };
+var STATUSES = ["Bought","Excellent","Good","Hmm...","Meh","Out","Waiting"];
+var ST_COLORS = { Bought:"#20c997",Excellent:"#0d6efd","Good":"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545",Waiting:"#17a2b8" };
 
 function autoStatus(home) {
+  if (home.bought) return "Bought";
   if (home.sold || home.pending || home.tooExpensive) return "Out";
   var mR = home.michelleRating, pR = home.peterRating;
   if (mR == null || pR == null) return "Waiting";
@@ -64,8 +63,7 @@ function fmtNum(n) {
 
 async function doExtractListing(url) {
   try {
-    var result = await extractListingFn({ url: url });
-    return result.data;
+    return await extractListingFn(url);
   } catch (e) {
     console.error("Extract fail:", e);
     return null;
@@ -77,7 +75,7 @@ async function doFetchCommute(addr, city, departureTime) {
     var params = { address: addr, city: city };
     if (departureTime) params.departureTime = departureTime;
     var result = await getCommuteFn(params);
-    return result.data.commute;
+    return result.commute;
   } catch (e) {
     console.error("Commute fail:", e);
     return null;
@@ -817,9 +815,10 @@ function HomeCard(props) {
           <div>
             <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>MARKET STATUS</label>
             <div style={{display:"flex",gap:10,alignItems:"center",marginTop:4,flexWrap:"wrap"}}>
-              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.sold?"#dc3545":C.text}}><input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked){u(h.id,"pending",false);u(h.id,"tooExpensive",false)}}} /> Sold</label>
-              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}><input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"tooExpensive",false)}}} /> Pending</label>
-              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tooExpensive?"#6f42c1":C.text}}><input type="checkbox" checked={!!h.tooExpensive} onChange={function(e){u(h.id,"tooExpensive",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false)}}} /> $$$</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.bought?"#20c997":C.text}}><input type="checkbox" checked={!!h.bought} onChange={function(e){u(h.id,"bought",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false);u(h.id,"tooExpensive",false)}}} /> Bought</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.sold?"#dc3545":C.text}}><input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked){u(h.id,"pending",false);u(h.id,"tooExpensive",false);u(h.id,"bought",false)}}} /> Sold</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}><input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"tooExpensive",false);u(h.id,"bought",false)}}} /> Pending</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tooExpensive?"#6f42c1":C.text}}><input type="checkbox" checked={!!h.tooExpensive} onChange={function(e){u(h.id,"tooExpensive",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false);u(h.id,"bought",false)}}} /> $$$</label>
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.momPick?"#e91e9c":C.text}}><input type="checkbox" checked={!!h.momPick} onChange={function(e){u(h.id,"momPick",e.target.checked)}} /> Mom's Pick</label>
             </div>
           </div>
@@ -864,7 +863,7 @@ function EditLoginModal(props) {
   function go() {
     if (!pw) return;
     setLoading(true); setErr("");
-    signInWithEmailAndPassword(auth, AUTH_EMAIL, pw)
+    pb.collection("users").authWithPassword(AUTH_EMAIL, pw)
       .then(function() { props.onSuccess(); })
       .catch(function() { setErr("Incorrect passcode"); setLoading(false); });
   }
@@ -936,7 +935,7 @@ function Dashboard(props) {
         }
         console.log(h.address, "→", mins, "min");
         if (mins != null) {
-          await updateDoc(doc(db, "homes", h.id), { commute: mins });
+          await pb.collection("homes").update(h.id, { commute: mins });
           count++;
         }
       } catch (err) {
@@ -949,19 +948,24 @@ function Dashboard(props) {
   }
 
   useEffect(function() {
-    var unsub = onSnapshot(collection(db, "homes"), function(snap) {
-      var data = snap.docs.map(function(d) {
-        return Object.assign({ id: d.id }, d.data());
+    var cancelled = false;
+    function refetch() {
+      pb.collection("homes").getFullList().then(function(data) {
+        if (!cancelled) setHomes(data);
       });
-      setHomes(data);
-    });
-    return unsub;
+    }
+    refetch();
+    pb.collection("homes").subscribe("*", refetch);
+    return function() {
+      cancelled = true;
+      pb.collection("homes").unsubscribe("*");
+    };
   }, []);
 
-  function upd(id, field, val) { var update = {}; update[field] = val; updateDoc(doc(db, "homes", id), update); }
-  function del(id) { deleteDoc(doc(db, "homes", id)); }
-  function add(h) { h.addedAt = new Date().toISOString(); addDoc(collection(db, "homes"), h); }
-  function doSignOut() { signOut(auth); }
+  function upd(id, field, val) { var update = {}; update[field] = val; pb.collection("homes").update(id, update); }
+  function del(id) { pb.collection("homes").delete(id); }
+  function add(h) { h.addedAt = new Date().toISOString(); pb.collection("homes").create(Object.assign({ user: pb.authStore.record && pb.authStore.record.id }, h)); }
+  function doSignOut() { pb.authStore.clear(); }
 
   function matchBed(h, sel) { if(!sel.length) return true; for(var i=0;i<sel.length;i++){if(sel[i]==="4+"&&h.bed>=4)return true;if(h.bed===parseFloat(sel[i]))return true} return false; }
   function matchBath(h, sel) { if(!sel.length) return true; for(var i=0;i<sel.length;i++){if(sel[i]==="3+"&&h.bath>=3)return true;if(h.bath===parseFloat(sel[i]))return true} return false; }
@@ -1125,9 +1129,10 @@ export default function App() {
   var _l = useState(true); var loading = _l[0]; var setLoading = _l[1];
 
   useEffect(function() {
-    var unsub = onAuthStateChanged(auth, function(user) {
-      setAuthed(!!user);
-      setLoading(false);
+    setAuthed(pb.authStore.isValid);
+    setLoading(false);
+    var unsub = pb.authStore.onChange(function() {
+      setAuthed(pb.authStore.isValid);
     });
     return unsub;
   }, []);
