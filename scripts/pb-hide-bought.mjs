@@ -1,6 +1,8 @@
 // Keeps the bought home (our actual address) private.
 //
-// - homes: logged-out visitors can no longer list/view/subscribe to the bought record.
+// - homes: logged-out visitors can no longer list/view/subscribe to the bought record,
+//   or to any record flagged `private` (e.g. other units in our building, which would
+//   give the address away just as well).
 // - homes_bought_public: a read-only view exposing only non-identifying fields of the
 //   bought home (no address, link, photo, notes), so the dashboard and huynh.place
 //   can still show a "We bought a home" card to the public.
@@ -20,7 +22,7 @@ if (!PB_ADMIN_EMAIL || !PB_ADMIN_PASSWORD) {
 
 const pb = new PocketBase(PB_URL)
 
-const HOMES_READ_RULE = 'bought = false || @request.auth.id != ""'
+const HOMES_READ_RULE = '(bought = false && private = false) || @request.auth.id != ""'
 const PUBLIC_VIEW_NAME = 'homes_bought_public'
 const PUBLIC_VIEW_QUERY = `SELECT id, city, neighborhood, style, price, sqft, bed, bath, hoa, kitchen,
   parking, commute, michelleRating, peterRating, tourStatus, momPick, bought, added, addedAt
@@ -30,7 +32,11 @@ async function main() {
   await pb.collection('_superusers').authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD)
   console.log('Authenticated as superuser.')
 
-  await pb.collections.update('homes', { listRule: HOMES_READ_RULE, viewRule: HOMES_READ_RULE })
+  const homes = await pb.collections.getOne('homes')
+  const fields = homes.fields.some((f) => f.name === 'private')
+    ? homes.fields
+    : homes.fields.concat([{ name: 'private', type: 'bool' }])
+  await pb.collections.update('homes', { fields, listRule: HOMES_READ_RULE, viewRule: HOMES_READ_RULE })
   console.log(`homes list/view rule -> ${HOMES_READ_RULE}`)
 
   const viewDef = { name: PUBLIC_VIEW_NAME, type: 'view', viewQuery: PUBLIC_VIEW_QUERY, listRule: '', viewRule: '' }

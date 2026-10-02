@@ -767,6 +767,7 @@ function HomeCard(props) {
             {h.pending && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
             {h.tooExpensive && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
             {highDown && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#e8390622",color:"#e83906",fontFamily:"var(--body)"}}>HIGH DOWN</span>}
+            {h.private && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6c757d22",color:"#6c757d",fontFamily:"var(--body)"}}>🔒 PRIVATE</span>}
             {h.momPick && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#e91e9c22",color:"#e91e9c",fontFamily:"var(--body)"}}>MOM</span>}
           </div>
           <h3 style={{margin:"0 0 1px",fontSize:11,fontFamily:"var(--head)",fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{addrContent}</h3>
@@ -822,6 +823,7 @@ function HomeCard(props) {
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}><input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"tooExpensive",false);u(h.id,"bought",false)}}} /> Pending</label>
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tooExpensive?"#6f42c1":C.text}}><input type="checkbox" checked={!!h.tooExpensive} onChange={function(e){u(h.id,"tooExpensive",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false);u(h.id,"bought",false)}}} /> $$$</label>
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.momPick?"#e91e9c":C.text}}><input type="checkbox" checked={!!h.momPick} onChange={function(e){u(h.id,"momPick",e.target.checked)}} /> Mom's Pick</label>
+              <label title="Hide from logged-out visitors (e.g. other units in our building)" style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.private?"#6c757d":C.text}}><input type="checkbox" checked={!!h.private} onChange={function(e){u(h.id,"private",e.target.checked)}} /> 🔒 Private</label>
             </div>
           </div>
           <div>
