@@ -772,6 +772,7 @@ function HomeCard(props) {
           </div>
           <h3 style={{margin:"0 0 1px",fontSize:11,fontFamily:"var(--head)",fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{addrContent}</h3>
           <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.city}{h.neighborhood ? " · "+h.neighborhood : ""}</div>
+          {h.masked && <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>🔒 Address hidden for privacy</div>}
           <div style={{fontSize:15,fontWeight:800,color:C.primary,fontFamily:"var(--head)",lineHeight:1}}>${h.price.toLocaleString()}</div>
           <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.sqft.toLocaleString()}sf · {h.bed}bd/{h.bath}ba · ${fmtNum(tot30)}/mo</div>
           <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
@@ -958,7 +959,7 @@ function Dashboard(props) {
       // from "homes"; they get masked stand-ins built from the address-free homes_masked_public view.
       var hidden = canEdit ? Promise.resolve([]) : pb.collection("homes_masked_public").getFullList().catch(function() { return []; });
       Promise.all([pb.collection("homes").getFullList(), hidden]).then(function(res) {
-        var masked = res[1].map(function(h) { return Object.assign({}, h, { address: h.bought ? "Our Home" : "Private for privacy", link: "", photoUrl: "", notes: "", masked: true }); });
+        var masked = res[1].map(function(h) { return Object.assign({}, h, { address: h.bought ? "Our Home" : "Private listing", link: "", photoUrl: "", notes: "", masked: true }); });
         if (!cancelled) setHomes(res[0].concat(masked));
       });
     }
