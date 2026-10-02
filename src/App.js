@@ -958,7 +958,7 @@ function Dashboard(props) {
       // from "homes"; they get masked stand-ins built from the address-free homes_masked_public view.
       var hidden = canEdit ? Promise.resolve([]) : pb.collection("homes_masked_public").getFullList().catch(function() { return []; });
       Promise.all([pb.collection("homes").getFullList(), hidden]).then(function(res) {
-        var masked = res[1].map(function(h) { return Object.assign({}, h, { address: h.bought ? "Our Home" : "Private listing", link: "", photoUrl: "", notes: "", masked: true }); });
+        var masked = res[1].map(function(h) { return Object.assign({}, h, { address: h.bought ? "Our Home" : "Private for privacy", link: "", photoUrl: "", notes: "", masked: true }); });
         if (!cancelled) setHomes(res[0].concat(masked));
       });
     }

@@ -5,7 +5,7 @@
 //   give the address away just as well).
 // - homes_masked_public: a read-only view exposing only non-identifying fields of those
 //   hidden records (no address, link, photo, notes), so the dashboard and huynh.place
-//   can still show them to the public as masked cards ("Our Home", "Private listing").
+//   can still show them to the public as masked cards ("Our Home", "Private for privacy").
 //
 // Usage: PB_ADMIN_EMAIL=... PB_ADMIN_PASSWORD=... node scripts/pb-hide-bought.mjs
 
