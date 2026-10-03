@@ -24,7 +24,7 @@ var S_OPTS = ["House","Townhouse","Condo"];
 var P_OPTS = ["None","Reserved (1)","Reserved (2)","Garage (1)","Garage (2)"];
 var BED_OPTS = ["1","2","3","4+"];
 var BATH_OPTS = ["1","1.5","2","2.5","3+"];
-var GMAPS_CLIENT_KEY = "AIzaSyCxX5eVLsbZfPzRlOqKUz5HlS_M8OStBJ8";
+var GMAPS_CLIENT_KEY = "AIzaSyB_3AncVVQtp9c57USKF88dI87EJhW6fi0";
 var AUTH_EMAIL = "home@search.hq";
 
 /* ─── Color Palette (matches huynh.place / bet.huynh.place) ─── */
