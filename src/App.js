@@ -284,7 +284,7 @@ function FilterPanel(props) {
       <div style={{marginBottom:6,marginTop:4}}>
         <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",marginBottom:5}}>OTHER</div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          <button onClick={function(){set("toured",!f.toured)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.toured?"1px solid #28a745":"1px solid "+C.cardBorder,background:f.toured?"#28a74522":"transparent",color:f.toured?"#28a745":C.textMuted}}>Toured</button>
+          <button onClick={function(){set("toured",!f.toured)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.toured?"1px solid #28a745":"1px solid "+C.cardBorder,background:f.toured?"#28a74522":"transparent",color:f.toured?"var(--hu-green)":C.textMuted}}>Toured</button>
           <button onClick={function(){set("momPick",!f.momPick)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.momPick?"1px solid #e91e9c":"1px solid "+C.cardBorder,background:f.momPick?"#e91e9c22":"transparent",color:f.momPick?"#e91e9c":C.textMuted}}>Mom's Pick</button>
         </div>
       </div>
@@ -309,7 +309,7 @@ function SidebarFilters(props) {
     <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,padding:"14px 14px 10px",fontFamily:"var(--body)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <span style={{fontSize:13,fontWeight:700,fontFamily:"var(--head)",color:C.text}}>Filters</span>
-        {activeCount > 0 && <button onClick={clearAll} style={{fontSize:10,fontFamily:"var(--body)",color:"#dc3545",background:"none",border:"1px solid #dc354533",borderRadius:5,padding:"2px 8px",cursor:"pointer"}}>Clear ({activeCount})</button>}
+        {activeCount > 0 && <button onClick={clearAll} style={{fontSize:10,fontFamily:"var(--body)",color:"var(--hu-red)",background:"none",border:"1px solid #dc354533",borderRadius:5,padding:"2px 8px",cursor:"pointer"}}>Clear ({activeCount})</button>}
       </div>
       <ChkGroup label="STATUS" options={STATUSES} selected={f.status} onChange={function(v){set("status",v)}} />
       <ChkGroup label="STYLE" options={S_OPTS} selected={f.style} onChange={function(v){set("style",v)}} />
@@ -320,7 +320,7 @@ function SidebarFilters(props) {
       <div style={{marginBottom:6}}>
         <div style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",marginBottom:5}}>OTHER</div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          <button onClick={function(){set("toured",!f.toured)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.toured?"1px solid #28a745":"1px solid "+C.cardBorder,background:f.toured?"#28a74522":"transparent",color:f.toured?"#28a745":C.textMuted}}>Toured</button>
+          <button onClick={function(){set("toured",!f.toured)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.toured?"1px solid #28a745":"1px solid "+C.cardBorder,background:f.toured?"#28a74522":"transparent",color:f.toured?"var(--hu-green)":C.textMuted}}>Toured</button>
           <button onClick={function(){set("momPick",!f.momPick)}} style={{fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",border:f.momPick?"1px solid #e91e9c":"1px solid "+C.cardBorder,background:f.momPick?"#e91e9c22":"transparent",color:f.momPick?"#e91e9c":C.textMuted}}>Mom's Pick</button>
         </div>
       </div>
@@ -459,7 +459,7 @@ function MapPanel(props) {
       icon: {
         path: gm.SymbolPath.CIRCLE,
         scale: 10,
-        fillColor: "#0d6efd",
+        fillColor: "var(--hu-blue)",
         fillOpacity: 1,
         strokeColor: "#fff",
         strokeWeight: 2
@@ -471,7 +471,7 @@ function MapPanel(props) {
     // Neighborhood highlight boundaries
     var hoods = [
       {name:"North Park Hill",color:"#55c278",path:[{lat:39.7780,lng:-104.9403},{lat:39.7780,lng:-104.9055},{lat:39.7610,lng:-104.9055},{lat:39.7610,lng:-104.9403}]},
-      {name:"South Park Hill",color:"#0d6efd",path:[{lat:39.7610,lng:-104.9403},{lat:39.7610,lng:-104.9055},{lat:39.7490,lng:-104.9055},{lat:39.7490,lng:-104.9403}]},
+      {name:"South Park Hill",color:"var(--hu-blue)",path:[{lat:39.7610,lng:-104.9403},{lat:39.7610,lng:-104.9055},{lat:39.7490,lng:-104.9055},{lat:39.7490,lng:-104.9403}]},
       {name:"Central Park",color:"#e91e9c",path:[{lat:39.7880,lng:-104.9055},{lat:39.7880,lng:-104.8690},{lat:39.7490,lng:-104.8690},{lat:39.7490,lng:-104.9055}]}
     ];
     for (var hi = 0; hi < hoods.length; hi++) {
@@ -543,7 +543,7 @@ function MapPanel(props) {
               '<span style="font-size:13px;font-weight:700;color:#55c278">$' + hh.price.toLocaleString() + '</span>' +
               '<span style="font-size:11px;color:#888"> · ' + hh.sqft + ' sqft</span><br>' +
               '<span style="font-size:11px;color:#888">' + hh.bed + ' bed · ' + hh.bath + ' bath · ' + hh.style + '</span>' +
-              (hh.commute != null ? '<br><span style="font-size:11px;color:#0d6efd">🚗 ' + hh.commute + ' min</span>' : '') +
+              (hh.commute != null ? '<br><span style="font-size:11px;color:#3b82c4">Commute: ' + hh.commute + ' min</span>' : '') +
               '<br><span style="display:inline-block;margin-top:4px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:' + self.color + '22;color:' + self.color + '">' + autoStatus(hh) + '</span>' +
               '</div>';
             infoRef.current.setContent(content);
@@ -608,7 +608,7 @@ function MapPanel(props) {
   return (
     <div style={{background:C.card,borderRadius:12,border:"1px solid "+C.cardBorder,marginBottom:12,overflow:"hidden"}}>
       <button onClick={function(){setOpen(!open)}} style={{width:"100%",background:"none",border:"none",padding:"12px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}>
-        <span style={{fontSize:13,color:C.text,fontFamily:"var(--head)",fontWeight:700}}>🗺️ Map</span>
+        <span style={{fontSize:13,color:C.text,fontFamily:"var(--head)",fontWeight:700}}>Map</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <span style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)"}}>{homes.length} pins</span>
           <span style={{color:C.textMuted,fontSize:10}}>{open ? "▲" : "▼"}</span>
@@ -617,7 +617,7 @@ function MapPanel(props) {
       {open && <div style={{borderTop:"1px solid "+C.cardBorder}}>
         <div style={{padding:"8px 18px 4px",display:"flex",gap:12,flexWrap:"wrap",fontSize:10,fontFamily:"var(--body)"}}>
           {STATUSES.map(function(s){ return <span key={s} style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:3,background:ST_COLORS[s],display:"inline-block"}}></span><span style={{color:C.textMuted}}>{s}</span></span> })}
-          <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:"50%",background:"#0d6efd",display:"inline-block"}}></span><span style={{color:C.textMuted}}>Work</span></span>
+          <span style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:"50%",background:"var(--hu-blue)",display:"inline-block"}}></span><span style={{color:C.textMuted}}>Work</span></span>
         </div>
         <div ref={mapRef} style={{width:"100%",height:420}} />
       </div>}
@@ -664,7 +664,7 @@ function UrlModal(props) {
           <button onClick={go} disabled={phase==="loading"} style={{background:phase==="loading"?C.cardBorder:C.primary,color:"#fff",border:"none",borderRadius:8,padding:"10px 20px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:700,whiteSpace:"nowrap"}}>{phase==="loading"?"Searching...":"Extract"}</button>
         </div>
         {phase==="loading" && <div style={{textAlign:"center",padding:30,fontSize:14,color:C.textMuted,fontFamily:"var(--body)"}}>Claude is searching the listing...</div>}
-        {phase==="error" && <div style={{padding:14,background:"#dc354511",border:"1px solid #dc354533",borderRadius:10}}><p style={{margin:0,color:"#dc3545",fontSize:13,fontFamily:"var(--body)"}}>{err}</p></div>}
+        {phase==="error" && <div style={{padding:14,background:"#dc354511",border:"1px solid #dc354533",borderRadius:10}}><p style={{margin:0,color:"var(--hu-red)",fontSize:13,fontFamily:"var(--body)"}}>{err}</p></div>}
         {phase==="review" && ext && <div>
           <div style={{padding:10,background:fade(C.primary,"11"),border:"1px solid "+fade(C.primary,"33"),borderRadius:10,marginBottom:12,fontSize:12,color:C.primary,fontFamily:"var(--body)"}}>Extracted — review and adjust</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
@@ -753,7 +753,7 @@ function HomeCard(props) {
   var ppsf = h.sqft ? (h.price / h.sqft).toFixed(0) : "—";
 
   var addrContent = h.masked
-    ? (h.bought ? "🏡 " : "🔒 ") + h.address
+    ? h.address
     : h.link
     ? <a href={h.link} target="_blank" rel="noopener noreferrer" style={{color:"inherit",textDecoration:"none",borderBottom:"1px solid "+fade(C.primary,"55"),paddingBottom:1}}>{h.address}</a>
     : h.address;
@@ -769,24 +769,24 @@ function HomeCard(props) {
         <div style={{padding:"8px 10px",flex:1,minWidth:0}}>
           <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap",marginBottom:2}}>
             <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:sc+"22",color:sc,fontFamily:"var(--body)"}}>{computedStatus}</span>
-            {h.sold && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#dc354522",color:"#dc3545",fontFamily:"var(--body)"}}>SOLD</span>}
+            {h.sold && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#dc354522",color:"var(--hu-red)",fontFamily:"var(--body)"}}>SOLD</span>}
             {h.pending && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#fd7e1422",color:"#fd7e14",fontFamily:"var(--body)"}}>PENDING</span>}
             {h.tooExpensive && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6f42c122",color:"#6f42c1",fontFamily:"var(--body)"}}>$$</span>}
             {highDown && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#e8390622",color:"#e83906",fontFamily:"var(--body)"}}>HIGH DOWN</span>}
-            {h.private && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6c757d22",color:"#6c757d",fontFamily:"var(--body)"}}>🔒 PRIVATE</span>}
+            {h.private && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#6c757d22",color:"#6c757d",fontFamily:"var(--body)"}}>PRIVATE</span>}
             {h.momPick && <span style={{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"#e91e9c22",color:"#e91e9c",fontFamily:"var(--body)"}}>MOM</span>}
           </div>
           <h3 style={{margin:"0 0 1px",fontSize:11,fontFamily:"var(--head)",fontWeight:700,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{addrContent}</h3>
           <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.city}{h.neighborhood ? " · "+h.neighborhood : ""}</div>
-          {h.masked && <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>🔒 Address hidden for privacy</div>}
+          {h.masked && <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>Address hidden for privacy</div>}
           <div style={{fontSize:15,fontWeight:800,color:C.primary,fontFamily:"var(--head)",lineHeight:1}}>${h.price.toLocaleString()}</div>
           <div style={{fontSize:9,color:C.textMuted,fontFamily:"var(--body)",marginBottom:3}}>{h.sqft.toLocaleString()}sf · {h.bed}bd/{h.bath}ba · ${fmtNum(tot30)}/mo</div>
           <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
             <RatingBar label="M" value={mR} color="#e83e8c" />
             <RatingBar label="P" value={pR} color={C.primary} />
             {tR != null && <span style={{fontSize:9,fontWeight:700,color:C.text,background:C.inputBg,padding:"0px 4px",borderRadius:4}}>{"Σ"+tR+((mR==null||pR==null)?"*":"")}</span>}
-            {h.commute != null && <span style={{fontSize:9,color:"#0d6efd",fontWeight:600}}>🚗{h.commute}m</span>}
-            {onMap && !h.masked && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"#0d6efd",cursor:"pointer",fontSize:9,fontFamily:"var(--body)",padding:"1px 0"}}>📍</button>}
+            {h.commute != null && <span style={{fontSize:9,color:"var(--hu-blue)",fontWeight:600}}>{h.commute} min</span>}
+            {onMap && !h.masked && <button onClick={function(e){e.stopPropagation();onMap(h)}} style={{marginLeft:"auto",background:"none",border:"none",color:"var(--hu-blue)",cursor:"pointer",fontSize:9,fontFamily:"var(--body)",padding:"1px 0"}}>Map</button>}
           </div>
         </div>
       </div>
@@ -794,12 +794,12 @@ function HomeCard(props) {
         <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>
           <span>Kitchen <strong style={{color:C.text}}>{h.kitchen}</strong></span>
           <span>Parking <strong style={{color:C.text}}>{h.parking}</strong></span>
-          <span>HOA <strong style={{color:h.hoa>400?"#dc3545":C.text}}>{h.hoa>0?"$"+h.hoa:"—"}</strong></span>
+          <span>HOA <strong style={{color:h.hoa>400?"var(--hu-red)":C.text}}>{h.hoa>0?"$"+h.hoa:"—"}</strong></span>
           <span>15yr <strong style={{color:C.text}}>${fmtNum(tot15)}/mo</strong></span>
           <span>30yr <strong style={{color:C.primary}}>${fmtNum(tot30)}/mo</strong></span>
           <span>Down <strong style={{color:C.text}}>${fmtNum(dp)}</strong></span>
           <span>Loan <strong style={{color:C.text}}>${ln.toLocaleString()}</strong></span>
-          {h.tourStatus && <span>Tour <strong style={{color:"#28a745"}}>✓ Toured</strong></span>}
+          {h.tourStatus && <span>Tour <strong style={{color:"var(--hu-green)"}}>✓ Toured</strong></span>}
           {h.notes && <span style={{fontStyle:"italic"}}>{h.notes}</span>}
         </div>
         <div style={{display:"flex",gap:16,flexWrap:"wrap",fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12,paddingBottom:12,borderBottom:"1px solid "+C.cardBorder}}>
@@ -826,11 +826,11 @@ function HomeCard(props) {
             <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>MARKET STATUS</label>
             <div style={{display:"flex",gap:10,alignItems:"center",marginTop:4,flexWrap:"wrap"}}>
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.bought?"#20c997":C.text}}><input type="checkbox" checked={!!h.bought} onChange={function(e){u(h.id,"bought",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false);u(h.id,"tooExpensive",false)}}} /> Bought</label>
-              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.sold?"#dc3545":C.text}}><input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked){u(h.id,"pending",false);u(h.id,"tooExpensive",false);u(h.id,"bought",false)}}} /> Sold</label>
+              <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.sold?"var(--hu-red)":C.text}}><input type="checkbox" checked={!!h.sold} onChange={function(e){u(h.id,"sold",e.target.checked);if(e.target.checked){u(h.id,"pending",false);u(h.id,"tooExpensive",false);u(h.id,"bought",false)}}} /> Sold</label>
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.pending?"#fd7e14":C.text}}><input type="checkbox" checked={!!h.pending} onChange={function(e){u(h.id,"pending",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"tooExpensive",false);u(h.id,"bought",false)}}} /> Pending</label>
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tooExpensive?"#6f42c1":C.text}}><input type="checkbox" checked={!!h.tooExpensive} onChange={function(e){u(h.id,"tooExpensive",e.target.checked);if(e.target.checked){u(h.id,"sold",false);u(h.id,"pending",false);u(h.id,"bought",false)}}} /> $$$</label>
               <label style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.momPick?"#e91e9c":C.text}}><input type="checkbox" checked={!!h.momPick} onChange={function(e){u(h.id,"momPick",e.target.checked)}} /> Mom's Pick</label>
-              <label title="Hide from logged-out visitors (e.g. other units in our building)" style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.private?"#6c757d":C.text}}><input type="checkbox" checked={!!h.private} onChange={function(e){if(!e.target.checked&&!window.confirm("Make this listing public?\n\n"+h.address+"\n\nAnyone visiting home.huynh.place or huynh.place will be able to see its address, photo and link."))return;u(h.id,"private",e.target.checked)}} /> 🔒 Private</label>
+              <label title="Hide from logged-out visitors (e.g. other units in our building)" style={{display:"flex",alignItems:"center",gap:3,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.private?"#6c757d":C.text}}><input type="checkbox" checked={!!h.private} onChange={function(e){if(!e.target.checked&&!window.confirm("Make this listing public?\n\n"+h.address+"\n\nAnyone visiting home.huynh.place or huynh.place will be able to see its address, photo and link."))return;u(h.id,"private",e.target.checked)}} /> Private</label>
             </div>
           </div>
           <div>
@@ -840,7 +840,7 @@ function HomeCard(props) {
           <EF label="Listing Link" value={h.link||""} onChange={function(v){u(h.id,"link",v)}} />
           <div>
             <label style={{fontSize:10,color:C.textMuted,fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.05em",display:"block",marginBottom:3}}>TOURED</label>
-            <label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tourStatus?"#28a745":C.text,marginTop:4}}>
+            <label style={{display:"flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:11,fontFamily:"var(--body)",color:h.tourStatus?"var(--hu-green)":C.text,marginTop:4}}>
               <input type="checkbox" checked={!!h.tourStatus} onChange={function(e){u(h.id,"tourStatus",e.target.checked?"Toured":"")}} />
               {h.tourStatus ? "Toured" : "Not yet"}
             </label>
@@ -850,7 +850,7 @@ function HomeCard(props) {
           <EF label="Photo URL" value={h.photoUrl||""} onChange={function(v){u(h.id,"photoUrl",v)}} />
           <EF label="Notes" value={h.notes||""} onChange={function(v){u(h.id,"notes",v)}} />
           <div style={{gridColumn:"1/-1",display:"flex",justifyContent:"flex-end",paddingTop:8}}>
-            <button onClick={function(e){e.stopPropagation();if(window.confirm("Are you sure you want to delete this listing?\n\n"+h.address))del(h.id)}} style={{background:"#dc354511",color:"#dc3545",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
+            <button onClick={function(e){e.stopPropagation();if(window.confirm("Are you sure you want to delete this listing?\n\n"+h.address))del(h.id)}} style={{background:"#dc354511",color:"var(--hu-red)",border:"1px solid #dc354533",borderRadius:8,padding:"6px 16px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600}}>DELETE</button>
           </div>
         </div>}
         {!canEdit && <div className="hshq-edit-grid">
@@ -882,12 +882,11 @@ function EditLoginModal(props) {
   return (
     <div style={{position:"fixed",inset:0,background:"#00000066",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,backdropFilter:"blur(4px)"}} onClick={props.onClose}>
       <div style={{background:C.card,borderRadius:16,padding:32,width:"90%",maxWidth:360,border:"1px solid "+C.cardBorder,textAlign:"center",boxShadow:"0 8px 32px #0002"}} onClick={function(e){e.stopPropagation()}}>
-        <div style={{width:48,height:48,borderRadius:12,background:C.primary,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,margin:"0 auto 14px",color:"#fff"}}>✏️</div>
         <h2 style={{margin:"0 0 4px",fontSize:22,fontWeight:700,color:C.text,fontFamily:"var(--head)"}}>Edit Mode</h2>
         <p style={{margin:"0 0 18px",fontSize:12,color:C.textMuted,fontFamily:"var(--body)"}}>Enter passcode to unlock editing</p>
         <input type="password" value={pw} onChange={function(e){setPw(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter")go()}} placeholder="Passcode"
-          style={{width:"100%",background:C.inputBg,border:"1px solid " + (err ? "#dc3545" : C.inputBorder),borderRadius:10,padding:"12px 16px",color:C.text,fontSize:15,fontFamily:"var(--body)",textAlign:"center",marginBottom:12,outline:"none"}} />
-        {err && <p style={{margin:"0 0 10px",fontSize:12,color:"#dc3545",fontFamily:"var(--body)"}}>{err}</p>}
+          style={{width:"100%",background:C.inputBg,border:"1px solid " + (err ? "var(--hu-red)" : C.inputBorder),borderRadius:10,padding:"12px 16px",color:C.text,fontSize:15,fontFamily:"var(--body)",textAlign:"center",marginBottom:12,outline:"none"}} />
+        {err && <p style={{margin:"0 0 10px",fontSize:12,color:"var(--hu-red)",fontFamily:"var(--body)"}}>{err}</p>}
         <div style={{display:"flex",gap:10}}>
           <button onClick={props.onClose} style={{flex:1,background:C.inputBg,color:C.textMuted,border:"1px solid "+C.cardBorder,borderRadius:10,padding:"12px",cursor:"pointer",fontSize:14,fontFamily:"var(--body)",fontWeight:600}}>Cancel</button>
           <button onClick={go} disabled={loading} style={{flex:1,background:loading?C.cardBorder:C.primary,color:"#fff",border:"none",borderRadius:10,padding:"12px",cursor:"pointer",fontSize:14,fontFamily:"var(--body)",fontWeight:700}}>{loading ? "..." : "Unlock"}</button>
@@ -1014,13 +1013,11 @@ function Dashboard(props) {
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"var(--body)",color:C.text}}>
       <style>{`:root{--head:var(--hu-font-head);--body:var(--hu-font-body)}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}@media(min-width:1600px){.hshq-scale{zoom:1.25}}@media(min-width:2200px){.hshq-scale{zoom:1.4}}@keyframes slideDown{from{max-height:0;opacity:0}to{max-height:800px;opacity:1}}.card-expand{animation:slideDown 0.3s ease-out forwards;overflow:hidden}.hshq-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.hshq-edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}@media(max-width:1200px){.hshq-cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.hshq-cards{grid-template-columns:repeat(2,1fr)}.hshq-sidebar{display:none!important}.hshq-mobile-filters{display:block!important}.hshq-layout{flex-direction:column!important}.hshq-main{width:100%!important}.hshq-edit-grid{grid-template-columns:1fr 1fr}.hshq-expanded-wrap{grid-column:auto!important}}@media(max-width:500px){.hshq-cards{grid-template-columns:repeat(2,1fr);gap:6px}.hshq-edit-grid{grid-template-columns:1fr}.hshq-expanded-wrap{grid-column:1/-1!important}.hshq-card-inner{flex-direction:column!important}.hshq-card-photo{width:100%!important;height:80px!important;min-height:80px!important}}`}</style>
 
-      <div className="hshq-scale">
-      {/* Shared huynh.place app header (same bar as B.E.T., Gym and Video Reviews) */}
+      {/* Shared huynh.place app header (same bar as B.E.T., Gym and Video Reviews); outside .hshq-scale so it's the same size */}
       <header className="hu-shell">
         <div className="hu-shell-inner">
           <a className="hu-home" href="https://huynh.place">← huynh.place</a>
           <div className="hu-app-id">
-            <span className="hu-app-icon" aria-hidden="true">🏠</span>
             <div>
               <h1 className="hu-app-name">Home Search HQ</h1>
               <span className="hu-app-sub">Peter & Michelle · Denver Metro · {homes.length} properties</span>
@@ -1028,13 +1025,15 @@ function Dashboard(props) {
           </div>
           <div className="hu-shell-actions">
             {canEdit ? <>
-              <span style={{fontSize:11,opacity:0.85}}>✏️ Edit Mode</span>
+              <span style={{fontSize:12,opacity:0.85}}>Editing</span>
               <button className="hu-btn hu-btn-small" onClick={doSignOut}>Lock</button>
-            </> : <button className="hu-btn hu-btn-small" onClick={function(){setShowLogin(true)}}>🔓 Edit Mode</button>}
-            <button className="hu-theme-toggle" type="button" data-hu-theme-toggle aria-label="Toggle dark mode" title="Toggle dark mode"><span className="hu-icon-light">🌙</span><span className="hu-icon-dark">☀️</span></button>
+            </> : <button className="hu-btn hu-btn-small" onClick={function(){setShowLogin(true)}}>Edit mode</button>}
+            <button className="hu-theme-toggle" type="button" data-hu-theme-toggle aria-label="Toggle dark mode" title="Toggle dark mode"><span className="hu-icon-light"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg></span><span className="hu-icon-dark"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span></button>
           </div>
         </div>
       </header>
+
+      <div className="hshq-scale">
 
       <div style={{maxWidth:1400,margin:"0 auto",padding:"20px 20px 28px"}}>
 
@@ -1042,24 +1041,24 @@ function Dashboard(props) {
 
         <div style={{marginBottom:16}}>
           <div style={{fontSize:11,color:C.textMuted,fontFamily:"var(--body)",marginBottom:10,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-            <span style={{color:"#0d6efd"}}>📍</span> Commute to: <span style={{color:"#0d6efd"}}>{WORK_ADDRESS}</span>
+            Commute to: <span style={{color:"var(--hu-blue)",fontWeight:700}}>{WORK_ADDRESS}</span>
             {canEdit && <span style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
               <select value={comDay} onChange={function(e){setComDay(e.target.value)}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"4px 6px",color:C.text,fontSize:11,fontFamily:"var(--body)",outline:"none",cursor:"pointer"}}>
                 <option value="1">Mon</option><option value="2">Tue</option><option value="3">Wed</option>
                 <option value="4">Thu</option><option value="5">Fri</option><option value="6">Sat</option><option value="0">Sun</option>
               </select>
               <input type="time" value={comTime} onChange={function(e){setComTime(e.target.value)}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:6,padding:"4px 6px",color:C.text,fontSize:11,fontFamily:"var(--body)",outline:"none"}} />
-              <button onClick={recalcAllCommutes} disabled={comLoading} style={{background:comLoading?"#ccc":C.primary,color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",cursor:comLoading?"not-allowed":"pointer",fontSize:11,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>
-                {comLoading ? "⏳ Calculating..." : "🔄 Recalc Commutes"}
+              <button onClick={recalcAllCommutes} disabled={comLoading} className="hu-btn hu-btn-small hu-btn-primary">
+                {comLoading ? "Calculating…" : "Recalculate commutes"}
               </button>
-              {comProgress && <span style={{fontSize:10,color:"#0d6efd",fontFamily:"var(--body)"}}>{comProgress}</span>}
+              {comProgress && <span style={{fontSize:10,color:"var(--hu-blue)",fontFamily:"var(--body)"}}>{comProgress}</span>}
             </span>}
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:8}}>
-            {[["Total",homes.length],["Active",activeCount],["Toured",touredCount],["Avg Price","$"+Math.round(avgPrice/1000)+"k"]].map(function(item){
-              return <div key={item[0]} style={{background:C.primary,borderRadius:10,padding:"14px 16px"}}>
-                <div style={{fontSize:10,color:"rgba(255,255,255,0.7)",fontFamily:"var(--body)",fontWeight:600,letterSpacing:"0.06em",marginBottom:4}}>{item[0].toUpperCase()}</div>
-                <div style={{fontSize:24,fontWeight:700,color:"#fff",fontFamily:"var(--head)"}}>{item[1]}</div>
+          <div className="hu-stats">
+            {[["Total",homes.length,"hu-green"],["Active",activeCount,"hu-blue"],["Toured",touredCount,"hu-teal"],["Avg Price","$"+Math.round(avgPrice/1000)+"k","hu-amber"]].map(function(item){
+              return <div key={item[0]} className={"hu-stat " + item[2]}>
+                <div className="hu-stat-label">{item[0]}</div>
+                <div className="hu-stat-value">{item[1]}</div>
               </div>
             })}
           </div>
@@ -1091,8 +1090,8 @@ function Dashboard(props) {
             </div>
             <div style={{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
           <input type="text" placeholder="Search address, city, notes..." value={search} onChange={function(e){setSearch(e.target.value)}}
-            style={{flex:"1 1 180px",background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 14px",color:C.text,fontSize:13,fontFamily:"var(--body)",outline:"none",minWidth:160}} />
-          <select value={sortBy} onChange={function(e){var v=e.target.value;setSortBy(v);setSortDir(v==="rating"||v==="added"||v==="sqft"?"desc":"asc")}} style={{background:C.card,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",color:C.text,fontSize:12,fontFamily:"var(--body)",outline:"none",cursor:"pointer"}}>
+            className="hu-input" style={{flex:"1 1 180px",width:"auto",minWidth:160}} />
+          <select value={sortBy} onChange={function(e){var v=e.target.value;setSortBy(v);setSortDir(v==="rating"||v==="added"||v==="sqft"?"desc":"asc")}} className="hu-select" style={{width:"auto"}}>
             <option value="price">Price</option>
             <option value="sqft">Sq Ft</option>
             <option value="rating">Rating</option>
@@ -1100,7 +1099,7 @@ function Dashboard(props) {
             <option value="added">Recent</option>
             <option value="commute">Commute</option>
           </select>
-          <button onClick={function(){setSortDir(function(d){return d==="asc"?"desc":"asc"})}} style={{background:C.card,color:"#0d6efd",border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 12px",cursor:"pointer",fontSize:12,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>{
+          <button onClick={function(){setSortDir(function(d){return d==="asc"?"desc":"asc"})}} className="hu-btn hu-btn-ghost" style={{whiteSpace:"nowrap"}}>{
             sortBy==="price" ? (sortDir==="asc"?"↑ Cheapest":"↓ Priciest") :
             sortBy==="sqft" ? (sortDir==="asc"?"↑ Smallest":"↓ Largest") :
             sortBy==="rating" ? (sortDir==="asc"?"↑ Worst":"↓ Best") :
@@ -1108,8 +1107,8 @@ function Dashboard(props) {
             sortBy==="added" ? (sortDir==="asc"?"↑ Oldest":"↓ Newest") :
             sortBy==="commute" ? (sortDir==="asc"?"↑ Nearest":"↓ Farthest") : ""
           }</button>
-          {canEdit && <button onClick={function(){setModal("url")}} style={{background:C.primary,color:"#fff",border:"none",borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:700,whiteSpace:"nowrap"}}>🔗 PASTE LINK</button>}
-          {canEdit && <button onClick={function(){setModal("manual")}} style={{background:C.card,color:C.text,border:"1px solid "+C.inputBorder,borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:13,fontFamily:"var(--body)",fontWeight:600,whiteSpace:"nowrap"}}>+ MANUAL</button>}
+          {canEdit && <button onClick={function(){setModal("url")}} className="hu-btn hu-btn-primary" style={{whiteSpace:"nowrap"}}>Paste link</button>}
+          {canEdit && <button onClick={function(){setModal("manual")}} className="hu-btn" style={{whiteSpace:"nowrap"}}>+ Add manually</button>}
         </div>
 
         <div style={{fontSize:12,color:C.textMuted,fontFamily:"var(--body)",marginBottom:12}}>Showing {filtered.length} of {homes.length}</div>
@@ -1129,7 +1128,6 @@ function Dashboard(props) {
         </div>
 
         {filtered.length === 0 && <div style={{textAlign:"center",padding:60,color:C.textMuted}}>
-          <div style={{fontSize:40,marginBottom:12}}>🔍</div>
           <div style={{fontSize:14,fontFamily:"var(--body)"}}>No homes match your filters</div>
         </div>}
           </div>{/* end main content */}
