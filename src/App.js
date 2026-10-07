@@ -5,7 +5,7 @@ var WORK_ADDRESS = "1635 Aurora Ct, Aurora, CO 80045";
 var WORK_COORDS = { lat: 39.7392, lng: -104.8374 };
 var DEFAULT_CFG = { rate15:4.6, rate30:5.75, term15:15, term30:30, maxDown:80000, downPct:20, insPct:0.5, taxPct:0.55 };
 var STATUSES = ["Bought","Excellent","Good","Hmm...","Meh","Out","Waiting"];
-var ST_COLORS = { Bought:"#20c997",Excellent:"#0d6efd","Good":"#28a745","Hmm...":"#ffc107",Meh:"#fd7e14",Out:"#dc3545",Waiting:"#17a2b8" };
+var ST_COLORS = { Bought:"#14a085",Excellent:"#3b82c4","Good":"#2f9e5a","Hmm...":"#c98516",Meh:"#e8590c",Out:"#c0392b",Waiting:"#5b7083" }; // same as huynh.place's badges
 
 function autoStatus(home) {
   if (home.bought) return "Bought";
@@ -28,21 +28,27 @@ var GMAPS_CLIENT_KEY = "AIzaSyB_3AncVVQtp9c57USKF88dI87EJhW6fi0";
 var AUTH_EMAIL = "home@search.hq";
 
 /* ─── Color Palette (matches huynh.place / bet.huynh.place) ─── */
+/* ─── Color Palette: shared huynh.place design tokens (from huynh.place/shared/huynh-ui.css),
+   so this app follows the same look and the same light/dark theme as the other apps ─── */
 var C = {
-  primary: "#55c278",
-  primaryDark: "#48a869",
-  primaryLight: "#77CE93",
-  primaryBg: "#e8f5ee",
-  bg: "#f0f7f3",
-  card: "#ffffff",
-  cardBorder: "#c8e6d3",
-  text: "#212529",
-  textMuted: "#6c757d",
-  textLight: "#888",
-  heading: "#55c278",
-  inputBg: "#f8faf9",
-  inputBorder: "#b8d8c5"
+  primary: "var(--hu-accent)",
+  primaryDark: "var(--hu-accent-dark)",
+  primaryLight: "var(--hu-chip-border)",
+  primaryBg: "var(--hu-accent-soft)",
+  bg: "var(--hu-bg)",
+  card: "var(--hu-surface)",
+  cardBorder: "var(--hu-border)",
+  text: "var(--hu-text)",
+  textMuted: "var(--hu-muted)",
+  textLight: "var(--hu-muted)",
+  heading: "var(--hu-accent-dark)",
+  inputBg: "var(--hu-surface-2)",
+  inputBorder: "var(--hu-border)"
 };
+// Translucent version of a color (works for CSS variables too, unlike appending hex alpha digits).
+function fade(color, hexAlpha) {
+  return "color-mix(in srgb, " + color + " " + Math.round(parseInt(hexAlpha, 16) / 255 * 100) + "%, transparent)";
+}
 
 function calcPmt(ratePct, years, principal) {
   if (!ratePct || !years || principal <= 0) return 0;
@@ -131,7 +137,7 @@ function ES(props) {
 function RatingBar(props) {
   if (props.value == null) return (
     <div style={{display:"flex",alignItems:"center",gap:4}}>
-      <span style={{fontSize:11,fontWeight:700,color:props.color+"55",fontFamily:"var(--body)",width:14}}>{props.label}</span>
+      <span style={{fontSize:11,fontWeight:700,color:fade(props.color,"55"),fontFamily:"var(--body)",width:14}}>{props.label}</span>
       <span style={{fontSize:12,color:"#ccc",fontFamily:"var(--body)"}}>—</span>
     </div>
   );
@@ -163,7 +169,7 @@ function ChkGroup(props) {
             <button key={o} onClick={function(){toggle(o)}} style={{
               fontSize:11,fontFamily:"var(--body)",fontWeight:600,padding:"3px 10px",borderRadius:6,cursor:"pointer",
               border: on ? "1px solid " + (col || C.primary) : "1px solid " + C.cardBorder,
-              background: on ? (col ? col + "22" : C.primary + "22") : "transparent",
+              background: on ? (col ? col + "22" : fade(C.primary,"22")) : "transparent",
               color: on ? (col || C.primary) : C.textMuted
             }}>{o}</button>
           );
@@ -660,7 +666,7 @@ function UrlModal(props) {
         {phase==="loading" && <div style={{textAlign:"center",padding:30,fontSize:14,color:C.textMuted,fontFamily:"var(--body)"}}>Claude is searching the listing...</div>}
         {phase==="error" && <div style={{padding:14,background:"#dc354511",border:"1px solid #dc354533",borderRadius:10}}><p style={{margin:0,color:"#dc3545",fontSize:13,fontFamily:"var(--body)"}}>{err}</p></div>}
         {phase==="review" && ext && <div>
-          <div style={{padding:10,background:C.primary+"11",border:"1px solid "+C.primary+"33",borderRadius:10,marginBottom:12,fontSize:12,color:C.primary,fontFamily:"var(--body)"}}>Extracted — review and adjust</div>
+          <div style={{padding:10,background:fade(C.primary,"11"),border:"1px solid "+fade(C.primary,"33"),borderRadius:10,marginBottom:12,fontSize:12,color:C.primary,fontFamily:"var(--body)"}}>Extracted — review and adjust</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
             <EF label="Address" value={ext.address} onChange={function(v){upd("address",v)}} span="1/-1" />
             <EF label="City" value={ext.city} onChange={function(v){upd("city",v)}} />
@@ -749,11 +755,11 @@ function HomeCard(props) {
   var addrContent = h.masked
     ? (h.bought ? "🏡 " : "🔒 ") + h.address
     : h.link
-    ? <a href={h.link} target="_blank" rel="noopener noreferrer" style={{color:"inherit",textDecoration:"none",borderBottom:"1px solid "+C.primary+"55",paddingBottom:1}}>{h.address}</a>
+    ? <a href={h.link} target="_blank" rel="noopener noreferrer" style={{color:"inherit",textDecoration:"none",borderBottom:"1px solid "+fade(C.primary,"55"),paddingBottom:1}}>{h.address}</a>
     : h.address;
 
   return (
-    <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+(ex?C.primary+"66":C.cardBorder),overflow:"hidden",boxShadow:ex?"0 2px 12px #55c27822":"0 1px 4px #0001",transition:"all 0.2s ease",cursor:"pointer",height:"100%",display:"flex",flexDirection:"column",maxWidth:"100%"}} onClick={function(e){if(e.target.tagName!=="INPUT"&&e.target.tagName!=="SELECT"&&e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&!e.target.closest("button")&&!e.target.closest("a")&&!e.target.closest("label"))tog(h.id)}}>
+    <div id={"home-card-" + h.id} style={{background:C.card,borderRadius:12,border:"1px solid "+(ex?fade(C.primary,"66"):C.cardBorder),overflow:"hidden",boxShadow:ex?"0 2px 12px #55c27822":"0 1px 4px #0001",transition:"all 0.2s ease",cursor:"pointer",height:"100%",display:"flex",flexDirection:"column",maxWidth:"100%"}} onClick={function(e){if(e.target.tagName!=="INPUT"&&e.target.tagName!=="SELECT"&&e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&!e.target.closest("button")&&!e.target.closest("a")&&!e.target.closest("label"))tog(h.id)}}>
       <div style={{height:3,background:sc}} />
       {/* Photo left + info right */}
       <div className="hshq-card-inner" style={{display:"flex",flex:1}}>
@@ -1006,24 +1012,29 @@ function Dashboard(props) {
 
   return (
     <div style={{minHeight:"100vh",background:C.bg,fontFamily:"var(--body)",color:C.text}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@500;700&family=Muli:wght@400;700;800&display=swap');:root{--head:'Saira Extra Condensed',sans-serif;--body:'Muli',sans-serif}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}@media(min-width:1600px){.hshq-scale{zoom:1.25}}@media(min-width:2200px){.hshq-scale{zoom:1.4}}@keyframes slideDown{from{max-height:0;opacity:0}to{max-height:800px;opacity:1}}.card-expand{animation:slideDown 0.3s ease-out forwards;overflow:hidden}.hshq-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.hshq-edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}@media(max-width:1200px){.hshq-cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.hshq-cards{grid-template-columns:repeat(2,1fr)}.hshq-sidebar{display:none!important}.hshq-mobile-filters{display:block!important}.hshq-layout{flex-direction:column!important}.hshq-main{width:100%!important}.hshq-edit-grid{grid-template-columns:1fr 1fr}.hshq-expanded-wrap{grid-column:auto!important}}@media(max-width:500px){.hshq-cards{grid-template-columns:repeat(2,1fr);gap:6px}.hshq-edit-grid{grid-template-columns:1fr}.hshq-expanded-wrap{grid-column:1/-1!important}.hshq-card-inner{flex-direction:column!important}.hshq-card-photo{width:100%!important;height:80px!important;min-height:80px!important}}`}</style>
+      <style>{`:root{--head:var(--hu-font-head);--body:var(--hu-font-body)}*{box-sizing:border-box}::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:${C.bg}}::-webkit-scrollbar-thumb{background:${C.primaryLight};border-radius:3px}input:focus,select:focus{border-color:${C.primary}!important}@media(min-width:1600px){.hshq-scale{zoom:1.25}}@media(min-width:2200px){.hshq-scale{zoom:1.4}}@keyframes slideDown{from{max-height:0;opacity:0}to{max-height:800px;opacity:1}}.card-expand{animation:slideDown 0.3s ease-out forwards;overflow:hidden}.hshq-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.hshq-edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}@media(max-width:1200px){.hshq-cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.hshq-cards{grid-template-columns:repeat(2,1fr)}.hshq-sidebar{display:none!important}.hshq-mobile-filters{display:block!important}.hshq-layout{flex-direction:column!important}.hshq-main{width:100%!important}.hshq-edit-grid{grid-template-columns:1fr 1fr}.hshq-expanded-wrap{grid-column:auto!important}}@media(max-width:500px){.hshq-cards{grid-template-columns:repeat(2,1fr);gap:6px}.hshq-edit-grid{grid-template-columns:1fr}.hshq-expanded-wrap{grid-column:1/-1!important}.hshq-card-inner{flex-direction:column!important}.hshq-card-photo{width:100%!important;height:80px!important;min-height:80px!important}}`}</style>
 
       <div className="hshq-scale">
-      {/* Green Header Banner */}
-      <div style={{background:C.primary,padding:"24px 20px 20px",marginBottom:0}}>
-        <div style={{maxWidth:1400,margin:"0 auto",display:"flex",alignItems:"center",gap:12}}>
-          <a href="https://huynh.place" style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)",textDecoration:"none",fontWeight:600,whiteSpace:"nowrap"}}>← Main</a>
-          <div style={{width:40,height:40,borderRadius:10,background:"rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏠</div>
-          <div style={{flex:1}}>
-            <h1 style={{margin:0,fontSize:30,fontWeight:700,letterSpacing:"-0.01em",color:"#fff",fontFamily:"var(--head)"}}>Home Search HQ</h1>
-            <p style={{margin:0,fontSize:12,color:"rgba(255,255,255,0.8)",fontFamily:"var(--body)"}}>Peter & Michelle · Denver Metro · {homes.length} properties</p>
+      {/* Shared huynh.place app header (same bar as B.E.T., Gym and Video Reviews) */}
+      <header className="hu-shell">
+        <div className="hu-shell-inner">
+          <a className="hu-home" href="https://huynh.place">← huynh.place</a>
+          <div className="hu-app-id">
+            <span className="hu-app-icon" aria-hidden="true">🏠</span>
+            <div>
+              <h1 className="hu-app-name">Home Search HQ</h1>
+              <span className="hu-app-sub">Peter & Michelle · Denver Metro · {homes.length} properties</span>
+            </div>
           </div>
-          {canEdit ? <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <span style={{fontSize:10,color:"rgba(255,255,255,0.7)",fontFamily:"var(--body)"}}>✏️ Edit Mode</span>
-            <button onClick={doSignOut} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>Lock</button>
-          </div> : <button onClick={function(){setShowLogin(true)}} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.3)",borderRadius:8,padding:"6px 14px",color:"#fff",cursor:"pointer",fontSize:11,fontFamily:"var(--body)"}}>🔓 Edit Mode</button>}
+          <div className="hu-shell-actions">
+            {canEdit ? <>
+              <span style={{fontSize:11,opacity:0.85}}>✏️ Edit Mode</span>
+              <button className="hu-btn hu-btn-small" onClick={doSignOut}>Lock</button>
+            </> : <button className="hu-btn hu-btn-small" onClick={function(){setShowLogin(true)}}>🔓 Edit Mode</button>}
+            <button className="hu-theme-toggle" type="button" data-hu-theme-toggle aria-label="Toggle dark mode" title="Toggle dark mode"><span className="hu-icon-light">🌙</span><span className="hu-icon-dark">☀️</span></button>
+          </div>
         </div>
-      </div>
+      </header>
 
       <div style={{maxWidth:1400,margin:"0 auto",padding:"20px 20px 28px"}}>
 
